@@ -1,6 +1,6 @@
 # Android IASDK documentation
 
-**IASDK** is Android SDK that helps integrate IhreApotheke into your app by providing
+**IASDK** is Android SDK that helps integrate IhreApotheken into your app by providing
 plug-and-play UI and communication with backed services.
 
 ## Requirements
@@ -33,7 +33,7 @@ To generate your access token, go to [GitHub settings page](https://github.com/s
 If you want, you can instead using `System` environment variables use `local.properties` to store your credentials. Find `local.properties`file in root of your project and add the following
 
 ```properties
-github.username=<your user name>  
+github.username=<your user name>
 github.password=<your github access token>
 ```
 
@@ -71,11 +71,11 @@ Add dependencies in your `build.gradle.kts` (app module) file:
 
 ```kotlin
 dependencies {
-    implementation("de.ihreapotheke.sdk.android:integrations")
+    implementation("de.ihreapotheken.sdk:integrations")
 
     // Only the feature UIs you need
-    implementation("de.ihreapotheke.sdk.android:otc")
-    implementation("de.ihreapotheke.sdk.android:ordering")
+    implementation("de.ihreapotheken.sdk:otc")
+    implementation("de.ihreapotheken.sdk:ordering")
     // other features...
 }
 ```
