@@ -54,6 +54,9 @@ and then add following to `repositories` block in your `settings.gradle.kts` fil
 
 ```kotlin
 repositories {
+    maven {
+        url = uri("https://api.mapbox.com/downloads/v2/releases/maven")
+    }
 	maven {
 		name = "IA SDK repo"
 		url = uri("https://maven.pkg.github.com/ihreapotheken/p-IA-SDK-Android")
