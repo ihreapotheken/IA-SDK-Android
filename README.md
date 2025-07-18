@@ -89,9 +89,9 @@ dependencies {
 
 #### Supporting different environments (optional)
 
-If you have different environments (for example, `staging` and `production`) and you want to use IA SDK staging environment, you need to define build flavors in your `build.gradle` file (in app module)
+If you have different environments (for example, `staging` and `production`) and you want to use IA SDK staging environment, you need to define build flavors in your `build.gradle` file (in `app` module)
 
-```kotlin build.gradle
+```kotlin
 android {
     ...
     flavorDimensions += "env"
@@ -107,9 +107,11 @@ android {
         }
     }
 }
-
 ```
-```kotlin build.gradle.kts
+
+Or for `build.gradle.kts`
+
+```kotlin
 android {
 	...
 	flavorDimensions += "env"  
@@ -150,6 +152,28 @@ dependencies {
 }
 ```
 
+or for `build.gradle.kts`
+
+```kotlin
+dependencies {
+	// staging dependencies
+    "stagingImplementation"("de.ihreapotheken.sdk.staging:integrations")
+
+    // Only the feature UIs you need
+    "stagingImplementation"("de.ihreapotheken.sdk.staging:otc")
+    "stagingImplementation"("de.ihreapotheken.sdk.staging:ordering")
+    // other features...
+	
+	
+	// production dependencies
+    "prodImplementation"("de.ihreapotheken.sdk:integrations")
+
+    // Only the feature UIs you need
+    "prodImplementation"("de.ihreapotheken.sdk:otc")
+	"prodImplementation"("de.ihreapotheken.sdk:ordering")
+    // other features...
+}
+```
 ### 3. SDK initialization
 
 Before using any functionality from the SDK, it must be initialized in `Application` class.
