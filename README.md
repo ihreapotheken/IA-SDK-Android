@@ -6,7 +6,6 @@ plug-and-play UI and communication with backed services.
 ## Requirements
 
 - min SDK: `30`
--
 
 ## Quick Start
 
@@ -86,6 +85,52 @@ dependencies {
 > [!IMPORTANT]
 > Dependency for  `integrations` is required, it provides the base functionality for the SDK.
 > Add other dependencies for features that you want to use (otc, ordering ,rx ,pharmacy...)
+
+#### Supporting different environments (optional)
+
+If you have different environments (for example, `staging` and `production`) and you want to use IA SDK staging environment, you need to define build flavors in your `build.gradle` file (in app module)
+
+```kotlin
+android {
+    ...
+    flavorDimensions += "env"
+
+    productFlavors {
+        staging {
+            dimension = "env"
+            applicationIdSuffix = ".staging"
+            versionNameSuffix = "-staging"
+        }
+        prod {
+            dimension = "env"
+        }
+    }
+}
+
+```
+
+Then we can have separate dependencies for each flavor. For example, to add `integrations`, `otc` and `ordering` modules, we add following dependencies
+
+```kotlin
+dependencies {
+	// staging dependencies
+    stagingImplementation("de.ihreapotheken.sdk.staging:integrations")
+
+    // Only the feature UIs you need
+    stagingImplementation("de.ihreapotheken.sdk.staging:otc")
+    stagingImplementation("de.ihreapotheken.sdk.staging:ordering")
+    // other features...
+	
+	
+	// production dependencies
+    prodImplementation("de.ihreapotheken.sdk:integrations")
+
+    // Only the feature UIs you need
+    prodImplementation("de.ihreapotheken.sdk:otc")
+	prodImplementation("de.ihreapotheken.sdk:ordering")
+    // other features...
+}
+```
 
 ### 3. SDK initialization
 
