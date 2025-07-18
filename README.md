@@ -53,10 +53,11 @@ and then add following to `repositories` block in your `settings.gradle.kts` fil
 
 ```kotlin
 repositories {
-    maven {
+	maven {
         url = uri("https://api.mapbox.com/downloads/v2/releases/maven")
     }
-	maven {
+    
+    maven {
 		name = "IA SDK repo"
 		url = uri("https://maven.pkg.github.com/ihreapotheken/p-IA-SDK-Android")
 		credentials {
@@ -90,7 +91,7 @@ dependencies {
 
 If you have different environments (for example, `staging` and `production`) and you want to use IA SDK staging environment, you need to define build flavors in your `build.gradle` file (in app module)
 
-```kotlin
+```kotlin build.gradle
 android {
     ...
     flavorDimensions += "env"
@@ -107,6 +108,23 @@ android {
     }
 }
 
+```
+```kotlin build.gradle.kts
+android {
+	...
+	flavorDimensions += "env"  
+	  
+	productFlavors {  
+	    create("staging") {  
+	        dimension = "env"  
+	        applicationIdSuffix = ".staging"  
+	        versionNameSuffix = "-staging"  
+	    }  
+	    create("prod") {  
+	        dimension = "env"  
+	    }  
+	}
+}
 ```
 
 Then we can have separate dependencies for each flavor. For example, to add `integrations`, `otc` and `ordering` modules, we add following dependencies
