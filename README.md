@@ -3,6 +3,10 @@
 **IASDK** is Android SDK that helps integrate IhreApotheken into your app by providing
 plug-and-play UI and communication with backed services.
 
+# Latest version
+
+Latest version of IA SDK is `DASDK012-1`
+
 ## Requirements
 
 - min SDK: `30`
@@ -15,6 +19,10 @@ To add our maven repository hosted on github.com to your project, add following 
 
 ```kotlin
 repositories {
+    maven {
+        url = uri("https://api.mapbox.com/downloads/v2/releases/maven")
+    }
+
 	maven {
 		name = "IA SDK repo"
 		url = uri("https://maven.pkg.github.com/ihreapotheken/p-IA-SDK-Android")
@@ -28,7 +36,7 @@ repositories {
 
 To generate your access token, go to [GitHub settings page](https://github.com/settings/tokens)
 
-#### Optional 
+#### Optional
 If you want, you can instead using `System` environment variables use `local.properties` to store your credentials. Find `local.properties`file in root of your project and add the following
 
 ```properties
@@ -53,12 +61,12 @@ and then add following to `repositories` block in your `settings.gradle.kts` fil
 
 ```kotlin
 repositories {
-	maven {
+    maven {
         url = uri("https://api.mapbox.com/downloads/v2/releases/maven")
     }
-    
+
     maven {
-		name = "IA SDK repo"
+        name = "IA SDK repo"
 		url = uri("https://maven.pkg.github.com/ihreapotheken/p-IA-SDK-Android")
 		credentials {
 			username = githubUsername
@@ -77,11 +85,14 @@ dependencies {
     implementation("de.ihreapotheken.sdk:integrations")
 
     // Only the feature UIs you need
-    implementation("de.ihreapotheken.sdk:otc")
-    implementation("de.ihreapotheken.sdk:ordering")
+    implementation("de.ihreapotheken.sdk:otc:<version>")
+    implementation("de.ihreapotheken.sdk:ordering:<version>")
     // other features...
 }
 ```
+> [!NOTE]
+> Change `<version>` with correct version.
+
 
 > [!IMPORTANT]
 > Dependency for  `integrations` is required, it provides the base functionality for the SDK.
@@ -93,7 +104,7 @@ If you have different environments (for example, `staging` and `production`) and
 
 ```kotlin
 android {
-    ...
+    //...
     flavorDimensions += "env"
 
     productFlavors {
@@ -102,6 +113,7 @@ android {
             applicationIdSuffix = ".staging"
             versionNameSuffix = "-staging"
         }
+
         prod {
             dimension = "env"
         }
@@ -113,18 +125,19 @@ Or for `build.gradle.kts`
 
 ```kotlin
 android {
-	...
-	flavorDimensions += "env"  
-	  
-	productFlavors {  
-	    create("staging") {  
-	        dimension = "env"  
-	        applicationIdSuffix = ".staging"  
-	        versionNameSuffix = "-staging"  
-	    }  
-	    create("prod") {  
-	        dimension = "env"  
-	    }  
+    //...
+	flavorDimensions += "env"
+
+	productFlavors {
+	    create("staging") {
+			dimension = "env"
+			applicationIdSuffix = ".staging"
+			versionNameSuffix = "-staging"
+		}
+
+		create("prod") {
+		    dimension = "env"
+		}
 	}
 }
 ```
@@ -133,21 +146,22 @@ Then we can have separate dependencies for each flavor. For example, to add `int
 
 ```kotlin
 dependencies {
-	// staging dependencies
-    stagingImplementation("de.ihreapotheken.sdk.staging:integrations")
+    // staging dependencies
+    stagingImplementation("de.ihreapotheken.sdk.staging:integrations:<version>")
 
     // Only the feature UIs you need
-    stagingImplementation("de.ihreapotheken.sdk.staging:otc")
-    stagingImplementation("de.ihreapotheken.sdk.staging:ordering")
+    stagingImplementation("de.ihreapotheken.sdk.staging:otc:<version>")
+    stagingImplementation("de.ihreapotheken.sdk.staging:ordering:<version>")
+
     // other features...
-	
-	
-	// production dependencies
-    prodImplementation("de.ihreapotheken.sdk:integrations")
+
+    // production dependencies
+    prodImplementation("de.ihreapotheken.sdk:integrations:<version>")
 
     // Only the feature UIs you need
-    prodImplementation("de.ihreapotheken.sdk:otc")
-	prodImplementation("de.ihreapotheken.sdk:ordering")
+    prodImplementation("de.ihreapotheken.sdk:otc:<version>")
+    prodImplementation("de.ihreapotheken.sdk:ordering:<version>")
+
     // other features...
 }
 ```
@@ -156,21 +170,22 @@ or for `build.gradle.kts`
 
 ```kotlin
 dependencies {
-	// staging dependencies
-    "stagingImplementation"("de.ihreapotheken.sdk.staging:integrations")
+    // staging dependencies
+    "stagingImplementation"("de.ihreapotheken.sdk.staging:integrations:<version>")
 
     // Only the feature UIs you need
-    "stagingImplementation"("de.ihreapotheken.sdk.staging:otc")
-    "stagingImplementation"("de.ihreapotheken.sdk.staging:ordering")
+    "stagingImplementation"("de.ihreapotheken.sdk.staging:otc:<version>")
+    "stagingImplementation"("de.ihreapotheken.sdk.staging:ordering:<version>")
+
     // other features...
-	
-	
-	// production dependencies
-    "prodImplementation"("de.ihreapotheken.sdk:integrations")
+
+    // production dependencies
+    "prodImplementation"("de.ihreapotheken.sdk:integrations:<version>")
 
     // Only the feature UIs you need
-    "prodImplementation"("de.ihreapotheken.sdk:otc")
-	"prodImplementation"("de.ihreapotheken.sdk:ordering")
+    "prodImplementation"("de.ihreapotheken.sdk:otc:<version>")
+    "prodImplementation"("de.ihreapotheken.sdk:ordering:<version>")
+
     // other features...
 }
 ```
@@ -188,16 +203,16 @@ class MyApp : Application() {
         super.onCreate()
 
         // Register the modules your app will use
-        IaSdk.register(  
-            IntegrationsModule,  
-            OtcModule,  
-            OrderingModule,  
-            PharmacyModule,  
-            RxModule,  
-        )  
-        .init(  
-            context = applicationContext,  
-            apiKey = "api_key"  
+        IaSdk.register(
+            IntegrationsModule,
+            OtcModule,
+            OrderingModule,
+            PharmacyModule,
+            RxModule,
+        )
+        .init(
+            context = applicationContext,
+            apiKey = "api_key"
         )
     }
 }
@@ -215,19 +230,18 @@ Modules like `OtcModule`, `OrderingModule` and others are included as needed, de
 At the root of your `setContent { … }`, wrap in the SDK theme so our custom color/typography/dimensions are provided:
 
 ```kotlin
- class MainActivity : ComponentActivity() {  
-  
-    override fun onCreate(savedInstanceState: Bundle?) {  
-        super.onCreate(savedInstanceState)  
-  
-        enableEdgeToEdge()  
-  
-        setContent {  
-            SdkTheme {  
-                AppScaffold()  
-            }  
-        }  
-    }  
+ class MainActivity : ComponentActivity() {
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+
+        enableEdgeToEdge()
+
+        setContent {
+            SdkTheme {
+                AppScaffold()
+            }
+        }
+    }
 }
 ```
 
@@ -238,51 +252,52 @@ Inside your top-level Composable (e.g. `AppScaffold()`), set up your `Scaffold` 
 ```kotlin
 @Composable
 fun AppScaffold() {
-  val navController = rememberNavController()
-  var isAtRoot by remember { mutableStateOf(true) }
+    val navController = rememberNavController()
+    var isAtRoot by remember { mutableStateOf(true) }
 
-  Scaffold(
-    bottomBar = { /* your host bottom bar, if any */ }
-  ) { innerPadding ->
-    Box(modifier = Modifier.padding(innerPadding)) {
-      NavHost(
-        navController    = navController,
-        startDestination = Route.Integration.StartScreen  // ⚠️ must be our SDK’s StartScreen in order to show Onboarding and Legal screens
-      ) {
-        // 1) Your host-app routes:
-        hostAppNavigationGraph()
+    Scaffold(
+        bottomBar = { /* your host bottom bar, if any */ }
+    ) { innerPadding ->
+        Box(modifier = Modifier.padding(innerPadding)) {
+            NavHost(
+                navController = navController,
+                // ⚠️ must be our SDK’s StartScreen in order to show Onboarding and Legal screens
+                startDestination = Route.Integration.StartScreen
+            ) {
+                // 1) Your host-app routes:
+                hostAppNavigationGraph()
 
-        // 2) All SDK routes
-        sdkGraphProvider()
-      }
+                // 2) All SDK routes
+                sdkGraphProvider()
+            }
+        }
+
+        // Required
+        SdkEntryScreen(
+            onDestinationChanged = { atRoot -> isAtRoot = atRoot },
+            navController = navController,
+            // main screen that should be shown after Onboarding and Legal - can be host apps screen or one of sdk screens
+            startRoute = HostAppRoute.StartHostApp
+        )
     }
 
-    // Required
-    SdkEntryScreen(
-      onDestinationChanged = { atRoot -> isAtRoot = atRoot },
-      navController        = navController,
-      startRoute           = HostAppRoute.StartHostApp // main screen that should be shown after Onboarding and Legal - can be host apps screen or one of sdk screens
-    )
-  }
-
-  // Optional: protect your status bar color under Compose
-  StatusBarProtection(LocalColorTokens.current.get("Header/bg"))
+    // Optional: protect your status bar color under Compose
+    StatusBarProtection(LocalColorTokens.current.get("Header/bg"))
 }
-
 ```
 
 ##### What each piece does
 
-- **`hostAppNavigationGraph()`**  
+- **`hostAppNavigationGraph()`**
     Your own app’s navigation graph (declare in your code).
-    
-- **`sdkGraphProvider()`**  
+
+- **`sdkGraphProvider()`**
     Brings in every SDK screen under the same `NavHost` (you don’t need to list them by hand).
-    
-- **`Route.Integration.StartScreen`**  
+
+- **`Route.Integration.StartScreen`**
     Entry-point for the SDK: runs onboarding, legal, and pharmacy-picker flows before your “real” feature.
-    
-- **`SdkEntryScreen(...)`**  
+
+- **`SdkEntryScreen(...)`**
     Listens and handles sdk navigation changes
 
 #### Host-app Route Definition
@@ -305,7 +320,6 @@ And your routes:
 ```kotlin
 @Serializable
 sealed class HostAppRoute  {
-
     @Serializable
     data object StartHostApp : HostAppRoute()
 
@@ -319,7 +333,7 @@ sealed class HostAppRoute  {
 To access Sdk Features you need to navigate to the entry point of feature's flow
 
 ```kotlin
-    // openSdkSearchScreen
+// openSdkSearchScreen
 navController.navigate(Route.Otc.StartScreen)
 
 // openSdkCart
@@ -360,22 +374,22 @@ private fun NavOptionsBuilder.manageBottomNavigationBackStack() {
 
 ### 5. How it works
 
-- **`SdkTheme`**  
+- **`SdkTheme`**
   Injects color palettes, typography, and dimensions.
 
-- **`hostAppNavigationGraph()`**  
+- **`hostAppNavigationGraph()`**
   Registers your own app’s destinations first.
 
-- **`sdkGraphProvider()`**  
+- **`sdkGraphProvider()`**
   Auto-includes every SDK feature under the same navigation graph—no manual listing required.
 
-- **`Route.Integration.StartScreen`**  
+- **`Route.Integration.StartScreen`**
   The SDK’s entry point: will run onboarding → legal → apofinder → your feature.
 
-- **`SdkEntryScreen`**  
+- **`SdkEntryScreen`**
   Listens for nav changes, monitor the current destination (e.g. for UI adjustments) and resets to `startDestination` when your SDK flow completes.
 
-- **`StatusBarProtection`**  
+- **`StatusBarProtection`**
   Applies a safe background color to avoid status-bar bleed-through.
 
 ### 6. Recap of Host Integration Steps
