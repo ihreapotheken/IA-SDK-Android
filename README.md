@@ -24,7 +24,7 @@ repositories {
     }
 
 	maven {
-		name = "IA SDK repo"
+	    name = "IA SDK repo"
 		url = uri("https://maven.pkg.github.com/ihreapotheken/p-IA-SDK-Android")
 		credentials {
 			username = System.getenv("GITHUB_USERNAME") ?: ""
