@@ -25,10 +25,10 @@ repositories {
 
 	maven {
 	    name = "IA SDK repo"
-		url = uri("https://maven.pkg.github.com/ihreapotheken/p-IA-SDK-Android")
-		credentials {
-			username = System.getenv("GITHUB_USERNAME") ?: ""
-			password = System.getenv("GITHUB_TOKEN") ?: ""
+	    url = uri("https://maven.pkg.github.com/ihreapotheken/p-IA-SDK-Android")
+	    credentials {
+		    username = System.getenv("GITHUB_USERNAME") ?: ""
+            password = System.getenv("GITHUB_TOKEN") ?: ""
 		}
 	}
 }
@@ -212,7 +212,8 @@ class MyApp : Application() {
         )
         .init(
             context = applicationContext,
-            apiKey = "api_key"
+            apiKey = "api_key",
+            clientId = "client_id"
         )
     }
 }
