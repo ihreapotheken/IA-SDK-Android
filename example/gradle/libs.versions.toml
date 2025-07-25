@@ -6,7 +6,7 @@ lifecycleRuntimeKtx = "2.9.2"
 activityCompose = "1.10.1"
 composeBom = "2025.07.00"
 kotlinxSerialization = "1.9.0"
-iasdk = "DASDK012-1"
+iasdk = "DASDK013-2"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -23,11 +23,11 @@ androidx-navigation-compose = { group = "androidx.navigation", name = "navigatio
 kotlinx-serialization-json = { group = "org.jetbrains.kotlinx", name = "kotlinx-serialization-json", version.ref = "kotlinxSerialization" }
 
 # IA SDK staging
-iasdk-staging-integrations = { group = "de.ihreapotheken.sdk.staging", name = "integrations", version.ref = "iasdk" }
-iasdk-staging-otc = { group = "de.ihreapotheken.sdk.staging", name = "otc", version.ref = "iasdk" }
-iasdk-staging-ordering = { group = "de.ihreapotheken.sdk.staging", name = "ordering", version.ref = "iasdk" }
-iasdk-staging-pharmacy = { group = "de.ihreapotheken.sdk.staging", name = "pharmacy", version.ref = "iasdk" }
-iasdk-staging-rx = { group = "de.ihreapotheken.sdk.staging", name = "rx", version.ref = "iasdk" }
+iasdk-integrations-staging = { group = "de.ihreapotheken.sdk", name = "integrations-staging", version.ref = "iasdk" }
+iasdk-otc-staging = { group = "de.ihreapotheken.sdk", name = "otc-staging", version.ref = "iasdk" }
+iasdk-ordering-staging = { group = "de.ihreapotheken.sdk", name = "ordering-staging", version.ref = "iasdk" }
+iasdk-pharmacy-staging = { group = "de.ihreapotheken.sdk", name = "pharmacy-staging", version.ref = "iasdk" }
+iasdk-rx-staging = { group = "de.ihreapotheken.sdk", name = "rx-staging", version.ref = "iasdk" }
 
 # IA SDK production
 iasdk-integrations = { group = "de.ihreapotheken.sdk", name = "integrations", version.ref = "iasdk" }
@@ -36,6 +36,24 @@ iasdk-ordering = { group = "de.ihreapotheken.sdk", name = "ordering", version.re
 iasdk-pharmacy = { group = "de.ihreapotheken.sdk", name = "pharmacy", version.ref = "iasdk" }
 iasdk-rx = { group = "de.ihreapotheken.sdk", name = "rx", version.ref = "iasdk" }
 
+[bundles]
+# IA SDK staging bundle
+iasdk-staging = [
+    "iasdk-integrations-staging",
+    "iasdk-otc-staging",
+    "iasdk-ordering-staging",
+    "iasdk-pharmacy-staging",
+    "iasdk-rx-staging"
+]
+
+# IA SDK production bundle
+iasdk = [
+    "iasdk-integrations",
+    "iasdk-otc",
+    "iasdk-ordering",
+    "iasdk-pharmacy",
+    "iasdk-rx"
+]
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

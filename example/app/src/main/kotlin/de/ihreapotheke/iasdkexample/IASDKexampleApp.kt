@@ -23,7 +23,8 @@ class IASDKexampleApp : Application() {
             )
             .init(
                 context = applicationContext,
-                apiKey = "api_key"
+                apiKey = "api_key",
+                clientID = "103"
             )
     }
 }

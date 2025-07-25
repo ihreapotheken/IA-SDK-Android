@@ -28,7 +28,7 @@ fun StartSdkScreen(navController: NavHostController) {
             Text("Click button to start Pharmacy module.")
             Spacer(modifier = Modifier.height(16.dp))
             Button(onClick = {
-                navController.navigate(Route.Pharmacy.StartScreen)
+                navController.navigate(Route.Otc.StartScreen)
             }) {
                 Text("Start SDK")
             }

@@ -1,3 +1,5 @@
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
@@ -47,8 +49,8 @@ android {
         }
     }
 
-    kotlinOptions {
-        jvmTarget = "11"
+    kotlin.compilerOptions {
+        jvmTarget = JvmTarget.JVM_11
     }
 
     buildFeatures {
@@ -71,18 +73,10 @@ dependencies {
     implementation(libs.kotlinx.serialization.json)
 
     // IA SDK staging dependencies
-    "stagingImplementation"(libs.iasdk.staging.integrations)
-    "stagingImplementation"(libs.iasdk.staging.otc)
-    "stagingImplementation"(libs.iasdk.staging.ordering)
-    "stagingImplementation"(libs.iasdk.staging.pharmacy)
-    "stagingImplementation"(libs.iasdk.staging.rx)
+    "stagingImplementation"(libs.bundles.iasdk.staging)
 
     // IA SDK prod dependencies
-    "prodImplementation"(libs.iasdk.integrations)
-    "prodImplementation"(libs.iasdk.otc)
-    "prodImplementation"(libs.iasdk.ordering)
-    "prodImplementation"(libs.iasdk.pharmacy)
-    "prodImplementation"(libs.iasdk.rx)
+    "prodImplementation"(libs.bundles.iasdk)
 
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)

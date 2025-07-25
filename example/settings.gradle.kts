@@ -7,9 +7,6 @@ if (localPropertiesFile.exists()) {
 val githubUsername = localProperties.getProperty("github.username") ?: ""
 val githubToken = localProperties.getProperty("github.token") ?: ""
 
-println("username: $githubUsername")
-println("token: $githubToken")
-
 pluginManagement {
     repositories {
         google {
