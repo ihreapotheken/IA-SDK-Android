@@ -1,7 +1,12 @@
 package de.ihreapotheke.iasdkexample
 
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.systemBars
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -26,6 +31,10 @@ fun AppScaffold() {
     var currentTab by remember { mutableStateOf(BottomTab.HOME) }
 
     Scaffold(
+        modifier = Modifier
+            .imePadding()
+            .navigationBarsPadding()
+            .windowInsetsPadding(WindowInsets.systemBars),
         bottomBar = {
             BottomBar(navController, currentTab) {
                 currentTab = it
@@ -36,7 +45,7 @@ fun AppScaffold() {
         Box(modifier = Modifier.padding(innerPadding)) {
             NavHost(
                 navController = navController,
-                startDestination = Route.Integration.StartScreen
+                startDestination = HostAppRoute.StartHostApp
             ) {
                 hostAppNavigationGraph(navController)
                 sdkGraphProvider()
@@ -46,7 +55,7 @@ fun AppScaffold() {
         SdkEntryScreen(
             onDestinationChanged = { atRoot -> isAtRoot = atRoot },
             navController = navController,
-            startRoute = HostAppRoute.DefaultScreen
+            startRoute = Route.Integration.Start
         )
     }
 
