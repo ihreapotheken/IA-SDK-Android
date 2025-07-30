@@ -12,7 +12,7 @@ android {
     compileSdk = 36
 
     defaultConfig {
-        applicationId = "de.ihreapotheke.iasdkexample"
+        applicationId = "de.ihreapotheke.iasdkexample2"
         minSdk = 30
         targetSdk = 36
         versionCode = 1

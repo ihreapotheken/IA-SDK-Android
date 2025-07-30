@@ -65,8 +65,6 @@ fun AppScaffold() {
 private fun onBottomTabSelect(selectedTab: BottomTab, navController: NavHostController) {
     val route = when (selectedTab) {
         BottomTab.HOME -> HostAppRoute.StartHostApp
-        BottomTab.OTC -> Route.Otc.StartScreen
-        BottomTab.PHARMACY -> Route.Pharmacy.StartScreen
         BottomTab.START_SDK -> HostAppRoute.StartSdkScreen
     }
 
