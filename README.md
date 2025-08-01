@@ -1,11 +1,11 @@
-# Android IASDK documentation
+i# Android IASDK documentation
 
 **IASDK** is Android SDK that helps integrate IhreApotheken into your app by providing
 plug-and-play UI and communication with backed services.
 
 # Latest version
 
-Latest version of IA SDK is `DASDK012-1`
+Latest version of IA SDK is `DASDK013-3`
 
 ## Requirements
 
@@ -257,13 +257,18 @@ fun AppScaffold() {
     var isAtRoot by remember { mutableStateOf(true) }
 
     Scaffold(
+        modifier = Modifier
+            .imePadding()
+            .navigationBarsPadding()
+            .windowInsetsPadding(WindowInsets.systemBars),
         bottomBar = { /* your host bottom bar, if any */ }
     ) { innerPadding ->
         Box(modifier = Modifier.padding(innerPadding)) {
             NavHost(
                 navController = navController,
-                // ⚠️ must be our SDK’s StartScreen in order to show Onboarding and Legal screens
-                startDestination = Route.Integration.StartScreen
+                // can be SDK's Route.Integration.Root - which will run onboarding and legal flow at the start
+                // or you can put host apps start destination
+                startDestination = Route.Integration.Root
             ) {
                 // 1) Your host-app routes:
                 hostAppNavigationGraph()
@@ -295,7 +300,7 @@ fun AppScaffold() {
 - **`sdkGraphProvider()`**
     Brings in every SDK screen under the same `NavHost` (you don’t need to list them by hand).
 
-- **`Route.Integration.StartScreen`**
+- **`Route.Integration.Root`**
     Entry-point for the SDK: runs onboarding, legal, and pharmacy-picker flows before your “real” feature.
 
 - **`SdkEntryScreen(...)`**
@@ -331,17 +336,23 @@ sealed class HostAppRoute  {
 
 #### Navigating to Sdk Screens
 
-To access Sdk Features you need to navigate to the entry point of feature's flow
+To access Sdk Features you need to navigate to the entry point of feature's flow.
+> [!IMPORTANT]
+> Use provided methods for navigating in order for SDK to function properly. If onboarding flow is not completed,
+> this will ensure that onboarding is run before intended screen and all prerequisite data is set
 
 ```kotlin
 // openSdkSearchScreen
-navController.navigate(Route.Otc.StartScreen)
+IaSdk.openSearchScreen()
 
 // openSdkCart
-navController.navigate(Route.Ordering.StartScreen)
+IaSdk.openCartScreen()
 
 // openSdkPharmacyScreen
-navController.navigate(Route.Pharmacy.StartScreen)
+IaSdk.openPharmacyScreen()
+
+// openSdkStartScreen
+IaSdk.openStartScreen()
 ```
 
 #####  Bottom Tab Navigation
@@ -351,13 +362,13 @@ Also, you can implement Bottom tab navigation in your app and call Sdk's destina
 ```kotlin
     private fun onBottomTabSelect(selectedTab: BottomTab, navController: NavHostController) {
     when (selectedTab) {
-        BottomTab.OTC -> navController.navigate(Route.Otc.StartScreen) {
+        BottomTab.OTC -> IaSdk.openSearchScreen {
             manageBottomNavigationBackStack()
         }
-        BottomTab.CART -> navController.navigate(Route.Ordering.StartScreen) {
+        BottomTab.CART -> IaSdk.openCartScreen {
             manageBottomNavigationBackStack()
         }
-        BottomTab.PHARMACY -> navController.navigate(Route.Pharmacy.StartScreen) {
+        BottomTab.PHARMACY -> IaSdk.openPharmacyScreen {
             manageBottomNavigationBackStack()
         }
     }
@@ -384,7 +395,7 @@ private fun NavOptionsBuilder.manageBottomNavigationBackStack() {
 - **`sdkGraphProvider()`**
   Auto-includes every SDK feature under the same navigation graph—no manual listing required.
 
-- **`Route.Integration.StartScreen`**
+- **`Route.Integration.Root`**
   The SDK’s entry point: will run onboarding → legal → apofinder → your feature.
 
 - **`SdkEntryScreen`**
