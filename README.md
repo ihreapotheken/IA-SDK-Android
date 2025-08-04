@@ -1,4 +1,4 @@
-i# Android IASDK documentation
+# Android IASDK documentation
 
 **IASDK** is Android SDK that helps integrate IhreApotheken into your app by providing
 plug-and-play UI and communication with backed services.
