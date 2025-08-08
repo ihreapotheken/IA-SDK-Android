@@ -1,4 +1,4 @@
-i# Android IASDK documentation
+# Android IASDK documentation
 
 **IASDK** is Android SDK that helps integrate IhreApotheken into your app by providing
 plug-and-play UI and communication with backed services.
@@ -25,7 +25,7 @@ repositories {
 
 	maven {
 	    name = "IA SDK repo"
-	    url = uri("https://maven.pkg.github.com/ihreapotheken/p-IA-SDK-Android")
+	    url = uri("https://maven.pkg.github.com/ihreapotheken/IA-SDK-Android")
 	    credentials {
 		    username = System.getenv("GITHUB_USERNAME") ?: ""
             password = System.getenv("GITHUB_TOKEN") ?: ""
@@ -67,7 +67,7 @@ repositories {
 
     maven {
         name = "IA SDK repo"
-		url = uri("https://maven.pkg.github.com/ihreapotheken/p-IA-SDK-Android")
+		url = uri("https://maven.pkg.github.com/ihreapotheken/IA-SDK-Android")
 		credentials {
 			username = githubUsername
 			password = githubToken

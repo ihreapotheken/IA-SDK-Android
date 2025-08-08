@@ -12,7 +12,7 @@ android {
     compileSdk = 36
 
     defaultConfig {
-        applicationId = "de.ihreapotheke.iasdkexample2"
+        applicationId = "de.ihreapotheke.iasdkexample3"
         minSdk = 30
         targetSdk = 36
         versionCode = 1
@@ -73,10 +73,10 @@ dependencies {
     implementation(libs.kotlinx.serialization.json)
 
     // IA SDK staging dependencies
-    "stagingImplementation"(libs.bundles.iasdk.staging)
+    "stagingImplementation"(libs.bundles.iasdk.staging.example3)
 
     // IA SDK prod dependencies
-    "prodImplementation"(libs.bundles.iasdk)
+    "prodImplementation"(libs.bundles.iasdk.example3)
 
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
