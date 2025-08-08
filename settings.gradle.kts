@@ -18,6 +18,7 @@ pluginManagement {
         }
         mavenCentral()
         gradlePluginPortal()
+        mavenLocal()
     }
 }
 
@@ -27,6 +28,7 @@ dependencyResolutionManagement {
     repositories {
         google()
         mavenCentral()
+        mavenLocal()
 
         maven {
             url = uri("https://api.mapbox.com/downloads/v2/releases/maven")
@@ -34,7 +36,7 @@ dependencyResolutionManagement {
 
         maven {
             name = "IA SDK repo"
-            url = uri("https://maven.pkg.github.com/ihreapotheken/p-IA-SDK-Android")
+            url = uri("https://maven.pkg.github.com/ihreapotheken/IA-SDK-Android")
             credentials {
                 username = githubUsername
                 password = githubToken
