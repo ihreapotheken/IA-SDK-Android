@@ -55,6 +55,18 @@ iasdk = [
     "iasdk-rx"
 ]
 
+# IA SDK staging bundle for example 3 - where only ordering is acitve
+iasdk-staging-example3 = [
+    "iasdk-integrations-staging",
+    "iasdk-ordering-staging",
+]
+
+# IA SDK production bundle
+iasdk-example3 = [
+    "iasdk-integrations",
+    "iasdk-ordering",
+]
+
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
 kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }

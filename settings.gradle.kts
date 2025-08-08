@@ -48,3 +48,4 @@ dependencyResolutionManagement {
 rootProject.name = "IA SDK Example"
 include(":example")
 include(":example2")
+include(":example3")
