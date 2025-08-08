@@ -5,7 +5,7 @@ plug-and-play UI and communication with backed services.
 
 # Latest version
 
-Latest version of IA SDK is `DASDK013-3`
+Latest version of IA SDK is `0.0.13-1`.
 
 ## Requirements
 
@@ -15,7 +15,8 @@ Latest version of IA SDK is `DASDK013-3`
 
 ### 1. Adding repository
 
-To add our maven repository hosted on github.com to your project, add following to `repositories` block in your `settings.gradle.kts` file:
+To add our maven repository hosted on github.com to your project, add following to `repositories` 
+block in your `settings.gradle.kts` file:
 
 ```kotlin
 repositories {
@@ -37,14 +38,16 @@ repositories {
 To generate your access token, go to [GitHub settings page](https://github.com/settings/tokens)
 
 #### Optional
-If you want, you can instead using `System` environment variables use `local.properties` to store your credentials. Find `local.properties`file in root of your project and add the following
+If you want, you can instead using `System` environment variables use `local.properties` to store 
+your credentials. Find `local.properties`file in root of your project and add the following
 
 ```properties
 github.username=<your user name>
 github.password=<your github access token>
 ```
 
-and then in `settings.gradle.kts` file fetch those values with following code (you can add this to top of file):
+and then in `settings.gradle.kts` file fetch those values with following code 
+(you can add this to top of file):
 
 ```kotlin
 val localProperties = java.util.Properties()
@@ -100,7 +103,9 @@ dependencies {
 
 #### Supporting different environments (optional)
 
-If you have different environments (for example, `staging` and `production`) and you want to use IA SDK staging environment, you need to define build flavors in your `build.gradle` file (in `app` module)
+If you have different environments (for example, `staging` and `production`) and you want to use 
+IA SDK staging environment, you need to define build flavors in your `build.gradle` file 
+(in `app` module)
 
 ```kotlin
 android {
@@ -142,16 +147,17 @@ android {
 }
 ```
 
-Then we can have separate dependencies for each flavor. For example, to add `integrations`, `otc` and `ordering` modules, we add following dependencies
+Then we can have separate dependencies for each flavor. For example, to add `integrations`, `otc` 
+and `ordering` modules, we add following dependencies
 
 ```kotlin
 dependencies {
     // staging dependencies
-    stagingImplementation("de.ihreapotheken.sdk.staging:integrations:<version>")
+    stagingImplementation("de.ihreapotheken.sdk:integrations-staging:<version>")
 
     // Only the feature UIs you need
-    stagingImplementation("de.ihreapotheken.sdk.staging:otc:<version>")
-    stagingImplementation("de.ihreapotheken.sdk.staging:ordering:<version>")
+    stagingImplementation("de.ihreapotheken.sdk:otc-staging:<version>")
+    stagingImplementation("de.ihreapotheken.sdk:ordering-staging:<version>")
 
     // other features...
 
@@ -171,11 +177,11 @@ or for `build.gradle.kts`
 ```kotlin
 dependencies {
     // staging dependencies
-    "stagingImplementation"("de.ihreapotheken.sdk.staging:integrations:<version>")
+    "stagingImplementation"("de.ihreapotheken.sdk:integrations-staging:<version>")
 
     // Only the feature UIs you need
-    "stagingImplementation"("de.ihreapotheken.sdk.staging:otc:<version>")
-    "stagingImplementation"("de.ihreapotheken.sdk.staging:ordering:<version>")
+    "stagingImplementation"("de.ihreapotheken.sdk:otc-staging:<version>")
+    "stagingImplementation"("de.ihreapotheken.sdk:ordering-staging:<version>")
 
     // other features...
 
@@ -222,16 +228,18 @@ class MyApp : Application() {
 > [!IMPORTANT]
 > `IntegrationsModule` is required, it provides the base functionality for the SDK.
 
-Modules like `OtcModule`, `OrderingModule` and others are included as needed, depending on your app features.
+Modules like `OtcModule`, `OrderingModule` and others are included as needed, depending on your 
+app features.
 
 ### 4. SDK usage
 
 #### Wrap your Compose tree in `SdkTheme`
 
-At the root of your `setContent { … }`, wrap in the SDK theme so our custom color/typography/dimensions are provided:
+At the root of your `setContent { … }`, wrap in the SDK theme so our custom 
+color/typography/dimensions are provided:
 
 ```kotlin
- class MainActivity : ComponentActivity() {
+class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -248,7 +256,8 @@ At the root of your `setContent { … }`, wrap in the SDK theme so our custom co
 
 #### Scaffold + Navigation setup
 
-Inside your top-level Composable (e.g. `AppScaffold()`), set up your `Scaffold` and a **single** `NavHost`:
+Inside your top-level Composable (e.g. `AppScaffold()`), set up your `Scaffold` and
+a **single** `NavHost`:
 
 ```kotlin
 @Composable
@@ -338,8 +347,9 @@ sealed class HostAppRoute  {
 
 To access Sdk Features you need to navigate to the entry point of feature's flow.
 > [!IMPORTANT]
-> Use provided methods for navigating in order for SDK to function properly. If onboarding flow is not completed,
-> this will ensure that onboarding is run before intended screen and all prerequisite data is set
+> Use provided methods for navigating in order for SDK to function properly. If onboarding 
+> flow is not completed, this will ensure that onboarding is run before intended 
+> screen and all prerequisite data is set
 
 ```kotlin
 // openSdkSearchScreen
@@ -399,7 +409,8 @@ private fun NavOptionsBuilder.manageBottomNavigationBackStack() {
   The SDK’s entry point: will run onboarding → legal → apofinder → your feature.
 
 - **`SdkEntryScreen`**
-  Listens for nav changes, monitor the current destination (e.g. for UI adjustments) and resets to `startDestination` when your SDK flow completes.
+  Listens for nav changes, monitor the current destination (e.g. for UI adjustments) and 
+  resets to `startDestination` when your SDK flow completes.
 
 - **`StatusBarProtection`**
   Applies a safe background color to avoid status-bar bleed-through.
