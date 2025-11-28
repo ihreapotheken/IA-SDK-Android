@@ -254,6 +254,24 @@ class MainActivity : ComponentActivity() {
 }
 ```
 
+> [!IMPORTANT]
+> IASDK does not support landscape mode at this point, so you will need to lock screen
+> orientation to portrait mode only.
+
+
+##### Locking screen mode to portrait
+To lock screen orientation to portrait, add following line of code to `onCreate()` method inside 
+host Activity.
+
+```kotlin
+override fun onCreate(savedInstanceState: Bundle?) {
+    super.onCreate(savedInstanceState)
+    requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
+
+    // ... the rest of your onCreate() method
+}
+```
+
 #### Scaffold + Navigation setup
 
 Inside your top-level Composable (e.g. `AppScaffold()`), set up your `Scaffold` and
