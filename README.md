@@ -5,7 +5,7 @@ plug-and-play UI and communication with backed services.
 
 # Latest version
 
-Latest version of IA SDK is `0.0.13-1`.
+Latest version of IA SDK is `0.0.19-3`.
 
 ## Requirements
 
@@ -15,7 +15,7 @@ Latest version of IA SDK is `0.0.13-1`.
 
 ### 1. Adding repository
 
-To add our maven repository hosted on github.com to your project, add following to `repositories` 
+To add our maven repository hosted on github.com to your project, add following to `repositories`
 block in your `settings.gradle.kts` file:
 
 ```kotlin
@@ -24,29 +24,29 @@ repositories {
         url = uri("https://api.mapbox.com/downloads/v2/releases/maven")
     }
 
-	maven {
-	    name = "IA SDK repo"
-	    url = uri("https://maven.pkg.github.com/ihreapotheken/IA-SDK-Android")
-	    credentials {
-		    username = System.getenv("GITHUB_USERNAME") ?: ""
+    maven {
+        name = "IA SDK repo"
+        url = uri("https://maven.pkg.github.com/ihreapotheken/IA-SDK-Android")
+        credentials {
+            username = System.getenv("GITHUB_USERNAME") ?: ""
             password = System.getenv("GITHUB_TOKEN") ?: ""
-		}
-	}
+        }
+    }
 }
 ```
 
 To generate your access token, go to [GitHub settings page](https://github.com/settings/tokens)
 
 #### Optional
-If you want, you can instead using `System` environment variables use `local.properties` to store 
-your credentials. Find `local.properties`file in root of your project and add the following
+If you want, you can instead using `System` environment variables use `local.properties` to store
+your credentials. Find `local.properties` file in root of your project and add the following
 
 ```properties
 github.username=<your user name>
 github.password=<your github access token>
 ```
 
-and then in `settings.gradle.kts` file fetch those values with following code 
+and then in `settings.gradle.kts` file fetch those values with following code
 (you can add this to top of file):
 
 ```kotlin
@@ -70,12 +70,12 @@ repositories {
 
     maven {
         name = "IA SDK repo"
-		url = uri("https://maven.pkg.github.com/ihreapotheken/IA-SDK-Android")
-		credentials {
-			username = githubUsername
-			password = githubToken
-		}
-	}
+        url = uri("https://maven.pkg.github.com/ihreapotheken/IA-SDK-Android")
+        credentials {
+            username = githubUsername
+            password = githubToken
+        }
+    }
 }
 ```
 
@@ -101,153 +101,53 @@ dependencies {
 > Dependency for  `integrations` is required, it provides the base functionality for the SDK.
 > Add other dependencies for features that you want to use (otc, ordering ,rx ,pharmacy...)
 
-#### Supporting different environments (optional)
-
-If you have different environments (for example, `staging` and `production`) and you want to use 
-IA SDK staging environment, you need to define build flavors in your `build.gradle` file 
-(in `app` module)
-
-```kotlin
-android {
-    //...
-    flavorDimensions += "env"
-
-    productFlavors {
-        staging {
-            dimension = "env"
-            applicationIdSuffix = ".staging"
-            versionNameSuffix = "-staging"
-        }
-
-        prod {
-            dimension = "env"
-        }
-    }
-}
-```
-
-Or for `build.gradle.kts`
-
-```kotlin
-android {
-    //...
-	flavorDimensions += "env"
-
-	productFlavors {
-	    create("staging") {
-			dimension = "env"
-			applicationIdSuffix = ".staging"
-			versionNameSuffix = "-staging"
-		}
-
-		create("prod") {
-		    dimension = "env"
-		}
-	}
-}
-```
-
-Then we can have separate dependencies for each flavor. For example, to add `integrations`, `otc` 
-and `ordering` modules, we add following dependencies
-
-```kotlin
-dependencies {
-    // staging dependencies
-    stagingImplementation("de.ihreapotheken.sdk:integrations-staging:<version>")
-
-    // Only the feature UIs you need
-    stagingImplementation("de.ihreapotheken.sdk:otc-staging:<version>")
-    stagingImplementation("de.ihreapotheken.sdk:ordering-staging:<version>")
-
-    // other features...
-
-    // production dependencies
-    prodImplementation("de.ihreapotheken.sdk:integrations:<version>")
-
-    // Only the feature UIs you need
-    prodImplementation("de.ihreapotheken.sdk:otc:<version>")
-    prodImplementation("de.ihreapotheken.sdk:ordering:<version>")
-
-    // other features...
-}
-```
-
-or for `build.gradle.kts`
-
-```kotlin
-dependencies {
-    // staging dependencies
-    "stagingImplementation"("de.ihreapotheken.sdk:integrations-staging:<version>")
-
-    // Only the feature UIs you need
-    "stagingImplementation"("de.ihreapotheken.sdk:otc-staging:<version>")
-    "stagingImplementation"("de.ihreapotheken.sdk:ordering-staging:<version>")
-
-    // other features...
-
-    // production dependencies
-    "prodImplementation"("de.ihreapotheken.sdk:integrations:<version>")
-
-    // Only the feature UIs you need
-    "prodImplementation"("de.ihreapotheken.sdk:otc:<version>")
-    "prodImplementation"("de.ihreapotheken.sdk:ordering:<version>")
-
-    // other features...
-}
-```
 ### 3. SDK initialization
 
 Before using any functionality from the SDK, it must be initialized in `Application` class.
 
 1. Create (or extend) your `Application` class
 2. Register the required SDK modules
-3. Provide your public API key for the SDK
+3. Initialize SDK with your API key and configuration
 
 ```kotlin
-class MyApp : Application() {
+class MyApp : Application(), SdkEventListener {
     override fun onCreate() {
         super.onCreate()
 
         // Register the modules your app will use
         IaSdk.register(
-            IntegrationsModule,
             OtcModule,
             OrderingModule,
             PharmacyModule,
             RxModule,
         )
-        .init(
+
+        // Initialize SDK
+        IaSdk.init(
             context = applicationContext,
-            apiKey = "api_key",
-            clientId = "client_id"
+            environmentType = EnvironmentType.PRODUCTION, // or STAGING
+            apiKey = "your_api_key",
+            clientId = "your_client_id",
+            configuration = IaSdkConfiguration(
+                shouldFetchThemeFromRemote = true,
+                prerequisiteFlowConfiguration = PrerequisiteFlowConfiguration(
+                    shouldRunOnboarding = true,
+                    shouldRunLegal = true
+                )
+            ),
+            sdkEventListener = this
         )
     }
-}
-```
 
-> [!IMPORTANT]
-> `IntegrationsModule` is required, it provides the base functionality for the SDK.
-
-Modules like `OtcModule`, `OrderingModule` and others are included as needed, depending on your 
-app features.
-
-### 4. SDK usage
-
-#### Wrap your Compose tree in `SdkTheme`
-
-At the root of your `setContent { … }`, wrap in the SDK theme so our custom 
-color/typography/dimensions are provided:
-
-```kotlin
-class MainActivity : ComponentActivity() {
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-
-        enableEdgeToEdge()
-
-        setContent {
-            SdkTheme {
-                AppScaffold()
+    override fun onSdkEvent(event: SdkEvent) {
+        when (event) {
+            SdkEvent.InitStatus.InitializationCompleted -> {
+                Log.d("App", "SDK initialized successfully")
+            }
+            is SdkEvent.InitError -> {
+                Log.e("App", "SDK initialization error: ${event.message}")
+            }
+            else -> { /* handle other events */
             }
         }
     }
@@ -255,192 +155,462 @@ class MainActivity : ComponentActivity() {
 ```
 
 > [!IMPORTANT]
-> IASDK does not support landscape mode at this point, so you will need to lock screen
-> orientation to portrait mode only.
+> Module registration is required before calling `init()`. Available modules include: `OtcModule`, `OrderingModule`,
+`PharmacyModule`, `RxModule`, `CardlinkModule`.
 
+> [!NOTE]
+> `SdkEventListener` doesn't necessarily need to be set at the startup, it can  also be set later with `IaSdk.setEventListener(...)`.
 
-##### Locking screen mode to portrait
-To lock screen orientation to portrait, add following line of code to `onCreate()` method inside 
-host Activity.
+#### Monitoring Initialization State
+
+You can observe the SDK initialization state using the `initState` flow:
 
 ```kotlin
-override fun onCreate(savedInstanceState: Bundle?) {
-    super.onCreate(savedInstanceState)
-    requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
-
-    // ... the rest of your onCreate() method
+lifecycleScope.launch {
+    IaSdk.initState.collect { state ->
+        when (state) {
+            InitState.UNINITIALIZED -> { /* SDK not initialized */
+            }
+            InitState.INITIALIZING -> { /* Show loading indicator */
+            }
+            InitState.INITIALIZED -> {
+                // SDK is ready, configure additional settings
+                IaSdk.setHostUiConfig(HostUiConfig(showDataProcessing = true))
+            }
+        }
+    }
 }
 ```
 
-#### Scaffold + Navigation setup
+#### Setting Up Listeners
 
-Inside your top-level Composable (e.g. `AppScaffold()`), set up your `Scaffold` and
-a **single** `NavHost`:
+Configure listeners after initialization to receive SDK events:
+
+```kotlin
+// Cart listener - receive updates when cart changes
+IaSdk.ordering.setCartListener(object : CartListener {
+    override fun onCartChanged(totalProducts: Int, totalPrescription: Int, totalItems: Int) {
+        updateCartBadge(totalItems)
+    }
+})
+
+// Checkout listener - receive notifications when checkout completes
+IaSdk.ordering.setCheckoutListener(object : CheckoutListener {
+    override fun onCheckoutCompleted(hostOrderId: String, sdkOrderId: String) {
+        Log.d("App", "Checkout completed: $hostOrderId")
+    }
+})
+```
+
+### 4. SDK Integration Modes
+
+The SDK supports three integration modes:
+
+#### A. Embedded Mode (Composable)
+
+Embed SDK screens directly in your Compose navigation:
 
 ```kotlin
 @Composable
-fun AppScaffold() {
+fun MainActivity() {
     val navController = rememberNavController()
-    var isAtRoot by remember { mutableStateOf(true) }
+    var selectedTab by remember { mutableStateOf(BottomTab.HOME) }
 
-    Scaffold(
+    Column(
+        verticalArrangement = Arrangement.Bottom,
         modifier = Modifier
-            .imePadding()
-            .navigationBarsPadding()
-            .windowInsetsPadding(WindowInsets.systemBars),
-        bottomBar = { /* your host bottom bar, if any */ }
-    ) { innerPadding ->
-        Box(modifier = Modifier.padding(innerPadding)) {
-            NavHost(
-                navController = navController,
-                // can be SDK's Route.Integration.Root - which will run onboarding and legal flow at the start
-                // or you can put host apps start destination
-                startDestination = Route.Integration.Root
-            ) {
-                // 1) Your host-app routes:
-                hostAppNavigationGraph()
+            .fillMaxSize()
+            .imePadding(),
+    ) {
+        Box(modifier = Modifier.weight(1f)) {
+            NavHost(navController, startDestination = HostAppRoute.MainScreen) {
+                // Your app screens
+                composable<HostAppRoute.MainScreen> {
+                    MainScreen()
+                }
 
-                // 2) All SDK routes
-                sdkGraphProvider()
+                // SDK screens
+                composable<HostAppRoute.SdkSearchScreen> {
+                    IaSdkScreen(
+                        sdkEntryPoint = SdkEntryPoint.SearchScreen,
+                        onNavigateToEntryPoint = { targetEntryPoint ->
+                            // Handle navigation to other SDK screens
+                            when (targetEntryPoint) {
+                                SdkEntryPoint.CartScreen -> {
+                                    navController.navigate(HostAppRoute.SdkCartScreen)
+                                    true // Navigation handled
+                                }
+                                else -> false // Let SDK handle it
+                            }
+                        }
+                    )
+                }
+
+                composable<HostAppRoute.SdkCartScreen> {
+                    IaSdkScreen(sdkEntryPoint = SdkEntryPoint.CartScreen)
+                }
+
+                composable<HostAppRoute.SdkPharmacyScreen> {
+                    IaSdkScreen(sdkEntryPoint = SdkEntryPoint.PharmacyScreen)
+                }
+
+                composable<HostAppRoute.SdkStartScreen> {
+                    IaSdkScreen(sdkEntryPoint = SdkEntryPoint.StartScreen)
+                }
             }
-        }
 
-        // Required
-        SdkEntryScreen(
-            onDestinationChanged = { atRoot -> isAtRoot = atRoot },
-            navController = navController,
-            // main screen that should be shown after Onboarding and Legal - can be host apps screen or one of sdk screens
-            startRoute = HostAppRoute.StartHostApp
+            BottomNavigationBar(
+                selectedTab = selectedTab,
+                onTabSelected = {
+                    selectedTab = it
+                    onBottomTabSelect(selectedTab = it, navController = navController)
+                }
+            )
+        }
+    }
+}
+```
+
+#### B. Full Flow Mode (New Activity)
+
+Launch SDK screens in a separate activity:
+
+```kotlin
+Button(
+    onClick = {
+        IaSdkActivity.start(
+            context = context,
+            view = SdkEntryPoint.StartScreen
         )
     }
-
-    // Optional: protect your status bar color under Compose
-    StatusBarProtection(LocalColorTokens.current.get("Header/bg"))
+) {
+    Text("Open SDK")
 }
+
+// With custom back action handling
+IaSdkActivity.start(
+    context = context,
+    view = SdkEntryPoint.CartScreen,
+    onBackAction = {
+        // Custom logic before closing
+        // Return true to close activity, false to prevent closing
+        true
+    }
+)
 ```
 
-##### What each piece does
+#### C. View-Based Integration
 
-- **`hostAppNavigationGraph()`**
-    Your own app’s navigation graph (declare in your code).
-
-- **`sdkGraphProvider()`**
-    Brings in every SDK screen under the same `NavHost` (you don’t need to list them by hand).
-
-- **`Route.Integration.Root`**
-    Entry-point for the SDK: runs onboarding, legal, and pharmacy-picker flows before your “real” feature.
-
-- **`SdkEntryScreen(...)`**
-    Listens and handles sdk navigation changes
-
-#### Host-app Route Definition
-
-Define your own routes in a NavGraphBuilder.hostAppNavigationGraph() extension, for example:
+For traditional View-based apps, create SDK views:
 
 ```kotlin
-fun NavGraphBuilder.hostAppNavigationGraph() {
-    navigation<HostAppRoute.StartHostApp>(startDestination = HostAppRoute.DefaultScreen) {
-        composable<HostAppRoute.DefaultScreen> {
-            /* Your home screen UI */
-        }
-        // ... other host screens
+class MyFragment : Fragment() {
+    override fun onCreateView(
+        inflater: LayoutInflater,
+        container: ViewGroup?,
+        savedInstanceState: Bundle?
+    ): View {
+        return IaSdkView.createView(
+            context = requireContext(),
+            sdkEntryPoint = SdkEntryPoint.SearchScreen
+        )
     }
 }
 ```
 
-And your routes:
+### 5. Available SDK Entry Points
+
+The SDK provides the following entry points via `SdkEntryPoint` enum:
+
+- `StartScreen` - Dashboard/home screen
+- `SearchScreen` - Product search functionality
+- `CartScreen` - Shopping cart and checkout
+- `PharmacyScreen` - Selected pharmacy details
+- `TransferPrescriptionsScreen` - For internal use only. Don't use this, if you want to transfer prescription use `Iasdk.ordering.transferPrescriptions` method
+- `LegalDisclaimerScreen` - Legal disclaimers and terms
+- `PrerequisiteFlow` - Onboarding and legal flow
+
+### 6. Advanced Features
+
+#### Setting User Data Dynamically
 
 ```kotlin
-@Serializable
-sealed class HostAppRoute  {
-    @Serializable
-    data object StartHostApp : HostAppRoute()
+// After user logs in
+IaSdk.setUserData(
+    GuestUser(
+        firstName = "John",
+        lastName = "Doe",
+        email = "john@example.com"
+    )
+)
 
-    @Serializable
-    data object DefaultScreen : HostAppRoute()
+// Clear user data on logout
+IaSdk.setUserData(null)
+```
+
+#### Customizing UI Configuration
+
+```kotlin
+IaSdk.setHostUiConfig(
+    HostUiConfig(
+        showDataProcessing = true
+    )
+)
+```
+
+#### Transfer Prescriptions
+
+```kotlin
+// Using PresentationMode.FULL_FLOW (opens in new activity)
+IaSdk.ordering.transferPrescription(
+    context = context,
+    images = listOf(prescriptionImageBytes),
+    pdfs = listOf(prescriptionPdfBytes),
+    presentationMode = PresentationMode.FULL_FLOW
+)
+
+// Using PresentationMode.OVERLAY with custom listener
+IaSdk.ordering.transferPrescription(
+    context = context,
+    images = listOf(prescriptionImageBytes),
+    pdfs = listOf(prescriptionPdfBytes),
+    presentationMode = PresentationMode.OVERLAY,
+    listener = object : TransferPrescriptionListener {
+        override fun onTransferPrescriptionEvent(event: TransferPrescriptionEvent): HandlingDecision {
+            when(event) {
+                is TransferPrescriptionEvent.Failed -> {
+                    Log.e("TransferPrescriptions", "Transfer prescription failed: ${event.errorMessage}")
+                }
+                TransferPrescriptionEvent.Loading -> {}
+                
+                is TransferPrescriptionEvent.Success -> {
+                    if (event.navigateToCart) {
+                        // Navigate to cart
+                    }
+                }
+            }
+            // Host app handled navigation
+            return HandlingDecision.HANDLED
+        }
+    }
+)
+```
+
+#### Managing Cart
+
+```kotlin
+// Clear cart contents
+IaSdk.ordering.deleteCart()
+```
+
+#### Clearing All SDK Data
+
+```kotlin
+// Clear all stored SDK data (cart, preferences, cache)
+// on Logout
+if (IaSdk.clearAllData()) {
+    Log.d("App", "All SDK data cleared")
 }
 ```
 
-#### Navigating to Sdk Screens
-
-To access Sdk Features you need to navigate to the entry point of feature's flow.
-> [!IMPORTANT]
-> Use provided methods for navigating in order for SDK to function properly. If onboarding 
-> flow is not completed, this will ensure that onboarding is run before intended 
-> screen and all prerequisite data is set
+#### Setting Custom Listeners
 
 ```kotlin
-// openSdkSearchScreen
-IaSdk.openSearchScreen()
+// Impressum/Legal click listener
+IaSdk.setImpressumClickListener(object : SdkImpressumListener {
+    override fun onImpressumClick() {
+        // Handle impressum click
+    }
+})
 
-// openSdkCart
-IaSdk.openCartScreen()
-
-// openSdkPharmacyScreen
-IaSdk.openPharmacyScreen()
-
-// openSdkStartScreen
-IaSdk.openStartScreen()
+// Data processing click listener
+IaSdk.setShowDataProcessingClickListener(object : SdkShowDataProcessingListener {
+    override fun onShowDataProcessingClick() {
+        // Handle data processing click
+    }
+})
 ```
 
-#####  Bottom Tab Navigation
+### 7. Bottom Tab Navigation Example
 
-Also, you can implement Bottom tab navigation in your app and call Sdk's destinations like this
+For apps with bottom navigation, integrate SDK screens as tabs:
 
 ```kotlin
+@Composable
+fun MainActivity() {
+    val navController = rememberNavController()
+    var selectedTab by remember { mutableStateOf(BottomTab.HOME) }
+
+    Column(
+        verticalArrangement = Arrangement.Bottom,
+        modifier = Modifier
+            .fillMaxSize()
+            .imePadding(),
+    ) {
+        Box(modifier = Modifier.weight(1f)) {
+            NavHost(navController, startDestination = HostAppRoute.MainScreen) {
+                // Your app screens
+                composable<HostAppRoute.MainScreen> {
+                    MainScreen()
+                }
+
+                // SDK screens
+                composable<HostAppRoute.SdkSearchScreen> {
+                    IaSdkScreen(
+                        sdkEntryPoint = SdkEntryPoint.SearchScreen,
+                        onNavigateToEntryPoint = { targetEntryPoint ->
+                            // Handle navigation to other SDK screens
+                            when (targetEntryPoint) {
+                                SdkEntryPoint.CartScreen -> {
+                                    navController.navigate(HostAppRoute.SdkCartScreen)
+                                    true // Navigation handled
+                                }
+                                else -> false // Let SDK handle it
+                            }
+                        }
+                    )
+                }
+
+                composable<HostAppRoute.SdkCartScreen> {
+                    IaSdkScreen(sdkEntryPoint = SdkEntryPoint.CartScreen)
+                }
+
+                composable<HostAppRoute.SdkPharmacyScreen> {
+                    IaSdkScreen(sdkEntryPoint = SdkEntryPoint.PharmacyScreen)
+                }
+
+                composable<HostAppRoute.SdkStartScreen> {
+                    IaSdkScreen(sdkEntryPoint = SdkEntryPoint.StartScreen)
+                }
+            }
+
+            BottomNavigationBar(
+                selectedTab = selectedTab,
+                onTabSelected = {
+                    selectedTab = it
+                    onBottomTabSelect(selectedTab = it, navController = navController)
+                }
+            )
+        }
+    }
+    
     private fun onBottomTabSelect(selectedTab: BottomTab, navController: NavHostController) {
-    when (selectedTab) {
-        BottomTab.OTC -> IaSdk.openSearchScreen {
-            manageBottomNavigationBackStack()
+        when (selectedTab) {
+            BottomTab.HOME -> navController.navigate(HostAppRoute.MainScreen) {
+                manageBottomNavigationBackStack()
+            }
+            BottomTab.SEARCH -> navController.navigate(HostAppRoute.SdkSearchScreen) {
+                manageBottomNavigationBackStack()
+            }
+            BottomTab.CART -> navController.navigate(HostAppRoute.SdkCartScreen) {
+                manageBottomNavigationBackStack()
+            }
+            BottomTab.PHARMACY -> navController.navigate(HostAppRoute.SdkPharmacyScreen) {
+                manageBottomNavigationBackStack()
+            }
         }
-        BottomTab.CART -> IaSdk.openCartScreen {
-            manageBottomNavigationBackStack()
-        }
-        BottomTab.PHARMACY -> IaSdk.openPharmacyScreen {
-            manageBottomNavigationBackStack()
-        }
+    }
+
+    private fun NavOptionsBuilder.manageBottomNavigationBackStack() {
+        popUpTo(0) { inclusive = true }
+        launchSingleTop = true
+        restoreState = true
     }
 }
 ```
 
-For bottom‐tab back‐stack management, follow [Google’s Compose Navigation guide](https://developer.android.com/develop/ui/compose/navigation#bottom-nav):
+### 8. Presentation Modes
+
+The SDK supports three presentation modes:
+
+- **`PresentationMode.EMBEDDED`** (default) - SDK screens are embedded in your navigation graph
+- **`PresentationMode.FULL_FLOW`** - SDK screens open in a new activity with their own navigation
+- **`PresentationMode.OVERLAY`** - SDK screens open as an overlay (useful for prescription transfer)
+
+Choose the mode based on your integration needs:
+
 ```kotlin
-private fun NavOptionsBuilder.manageBottomNavigationBackStack() {
-    popUpTo(0) { inclusive = true }
-    launchSingleTop = true
-    restoreState = true
-}
+// Embedded - for seamless integration
+IaSdkScreen(
+    sdkEntryPoint = SdkEntryPoint.SearchScreen,
+    presentationMode = PresentationMode.EMBEDDED
+)
+
+// Full flow - for separate activity
+IaSdkActivity.start(context, SdkEntryPoint.StartScreen)
+
+// Transfer prescription as overlay
+IaSdk.ordering.transferPrescription(
+    context = context,
+    images = listOf(prescriptionImageBytes),
+    pdfs = listOf(prescriptionPdfBytes),
+    presentationMode = PresentationMode.OVERLAY,
+    listener = object : TransferPrescriptionListener {
+        override fun onTransferPrescriptionEvent() {
+            // Navigate to cart or show success message
+        }
+    }
+)
 ```
 
-### 5. How it works
+### 9. Key Components Summary
 
-- **`SdkTheme`**
-  Injects color palettes, typography, and dimensions.
+- **`IaSdk`** - Main SDK entry point for initialization and configuration
+- **`IaSdk.pharmacy`** - Access to pharmacy-related functionality
+- **`IaSdk.ordering`** - Access to cart, ordering, and prescription features
+- **`IaSdkScreen`** - Composable for embedding SDK screens
+- **`IaSdkActivity`** - Activity for launching SDK in full-flow mode
+- **`IaSdkView`** - Factory for creating SDK views for traditional View hierarchies
+- **`SdkEntryPoint`** - Enum defining all available SDK screens
+- **`PresentationMode`** - Enum defining how SDK screens are presented
+- **`IaSdkConfiguration`** - Configuration options for SDK initialization
+- **`InitState`** - Observable state for monitoring SDK initialization
 
-- **`hostAppNavigationGraph()`**
-  Registers your own app’s destinations first.
+### 10. API Reference
 
-- **`sdkGraphProvider()`**
-  Auto-includes every SDK feature under the same navigation graph—no manual listing required.
+#### IaSdk Properties
 
-- **`Route.Integration.Root`**
-  The SDK’s entry point: will run onboarding → legal → apofinder → your feature.
+- `initState: StateFlow<InitState>` - Observable initialization state
+- `pharmacy: IaSdkPharmacy` - Pharmacy-related operations
+- `ordering: IaSdkOrdering` - Cart and ordering operations
 
-- **`SdkEntryScreen`**
-  Listens for nav changes, monitor the current destination (e.g. for UI adjustments) and 
-  resets to `startDestination` when your SDK flow completes.
+#### IaSdk Methods
 
-- **`StatusBarProtection`**
-  Applies a safe background color to avoid status-bar bleed-through.
+- `register(vararg modules: SdkModule): IaSdk` - Register SDK modules
+- `init(...)` - Initialize SDK with configuration
+- `setEventListener(listener: SdkEventListener?)` - Set event listener
+- `setUserData(user: GuestUser?)` - Set/update user data
+- `setHostUiConfig(config: HostUiConfig?)` - Update UI configuration
+- `isInitialized(): Boolean` - Check if SDK is initialized
+- `clearAllData(): Boolean` - Clear all SDK data
+- `setImpressumClickListener(listener: SdkImpressumListener)` - Set impressum listener
+- `setShowDataProcessingClickListener(listener: SdkShowDataProcessingListener)` - Set data processing listener
 
-### 6. Recap of Host Integration Steps
+#### IaSdkOrdering Methods
 
-1. **Gradle**: `implementation project(":integration")` + feature modules
+- `setCartListener(listener: CartListener)` - Listen to cart changes
+- `setCheckoutListener(listener: CheckoutListener)` - Listen to checkout completion
+- `transferPrescription(...)` - Transfer prescription data
+- `deleteCart()` - Clear cart contents
 
-2. **Theme**: wrap root in `SdkTheme { … }`
+#### IaSdkPharmacy Methods
+- `setPharmacyId(pharmacyId: String, pharmacyConfigListener: PharmacyConfigListener? = null)` - Set pharmacy id and observe result
+- `getPharmacyId(): String` - Suspend fun - Get the current pharmacy ID.
 
-3. **NavHost**: call `hostAppNavigationGraph()` followed by `sdkGraphProvider()`
+### 11. Troubleshooting
 
-4. **Entry Screen**: include `SdkEntryScreen(...)` below your NavHost
+**SDK not initializing?**
 
-5. **Status Bar**: optionally use `StatusBarProtection(...)`
+- Ensure you called `register()` before `init()`
+- Check that your API key and client ID are valid
+- Monitor `initState` flow or implement `SdkEventListener` to see initialization errors
+
+**Navigation not working?**
+
+- Verify you're using the correct `SdkEntryPoint` for your desired screen
+- Ensure SDK modules for required features are registered
+- Check that `onNavigateToEntryPoint` callback is properly implemented for tab navigation
+
+**Cart not updating?**
+
+- Verify ordering module is registered: `IaSdk.register(OrderingModule)`
