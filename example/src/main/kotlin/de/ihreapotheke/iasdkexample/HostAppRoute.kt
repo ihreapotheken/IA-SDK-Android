@@ -5,11 +5,17 @@ import kotlinx.serialization.Serializable
 @Serializable
 sealed class HostAppRoute  {
     @Serializable
-    data object StartHostApp : HostAppRoute()
+    data object MainScreen : HostAppRoute()
 
     @Serializable
-    data object DefaultScreen : HostAppRoute()
+    data object SdkStartScreen : HostAppRoute()
 
     @Serializable
-    data object StartSdkScreen : HostAppRoute()
+    data object SdkSearchScreen : HostAppRoute()
+
+    @Serializable
+    data object SdkCartScreen : HostAppRoute()
+
+    @Serializable
+    data object SdkPharmacyScreen : HostAppRoute()
 }

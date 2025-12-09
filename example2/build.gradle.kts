@@ -72,11 +72,8 @@ dependencies {
 
     implementation(libs.kotlinx.serialization.json)
 
-    // IA SDK staging dependencies
-    "stagingImplementation"(libs.bundles.iasdk.staging)
-
-    // IA SDK prod dependencies
-    "prodImplementation"(libs.bundles.iasdk)
+    // IA SDK dependencies
+    implementation(libs.bundles.iasdk)
 
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)

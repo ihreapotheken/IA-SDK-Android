@@ -10,8 +10,8 @@ import androidx.compose.ui.graphics.vector.ImageVector
 
 enum class BottomTab(val label: String, val icon: ImageVector) {
     HOME("Home", Icons.Default.Home),
-    OTC("OTC", Icons.Default.Search),
-    PHARMACY("Pharmacy", Icons.Default.Place),
-    CART("Cart", Icons.Default.ShoppingCart),
-    START_SDK("Start", Icons.Default.FavoriteBorder)
+    SDK_START_SCREEN("Start", Icons.Default.FavoriteBorder),
+    SDK_SEARCH("Search", Icons.Default.Search),
+    SDK_CART("Cart", Icons.Default.ShoppingCart),
+    SDK_PHARMACY("Pharmacy", Icons.Default.Place),
 }
