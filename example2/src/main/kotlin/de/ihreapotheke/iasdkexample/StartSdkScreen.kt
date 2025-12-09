@@ -1,5 +1,6 @@
 package de.ihreapotheke.iasdkexample
 
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -10,26 +11,38 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
-import de.ihreapotheken.sdk.integrations.api.IaSdk
+import de.ihreapotheken.sdk.integrations.api.view.IaSdkActivity
+import de.ihreapotheken.sdk.integrations.api.view.SdkEntryPoint
 
 @Composable
 fun StartSdkScreen() {
+    val context = LocalContext.current
+
     Box(
         modifier = Modifier.fillMaxSize(),
         contentAlignment = Alignment.Center
     ) {
         Column(
-            horizontalAlignment = Alignment.CenterHorizontally
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
         ) {
             Text("Welcome to Host App")
+
             Spacer(modifier = Modifier.height(8.dp))
-            Text("Click button to start Pharmacy module.")
+
+            Text("Click button to start IA SDK.")
+
             Spacer(modifier = Modifier.height(16.dp))
+
             Button(onClick = {
-                IaSdk.openStartScreen()
+                IaSdkActivity.start(
+                    context = context,
+                    view = SdkEntryPoint.StartScreen
+                )
             }) {
-                Text("Start SDK")
+                Text("Start SDK in new Activity")
             }
         }
     }
