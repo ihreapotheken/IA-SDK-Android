@@ -5,7 +5,7 @@ plug-and-play UI and communication with backed services.
 
 # Latest version
 
-Latest version of IA SDK is `0.0.19-4`.
+Latest version of IA SDK is `0.0.21-8`.
 
 ## Requirements
 
@@ -43,7 +43,7 @@ your credentials. Find `local.properties` file in root of your project and add t
 
 ```properties
 github.username=<your user name>
-github.password=<your github access token>
+github.token=<your github access token>
 ```
 
 and then in `settings.gradle.kts` file fetch those values with following code
@@ -320,7 +320,7 @@ class MyFragment : Fragment() {
 
 ### 5. Available SDK Entry Points
 
-The SDK provides the following entry points via `SdkEntryPoint` enum:
+The SDK provides the following entry points via `IaScreen` object:
 
 - `StartScreen` - Dashboard/home screen
 - `SearchScreen` - Product search functionality
@@ -329,6 +329,7 @@ The SDK provides the following entry points via `SdkEntryPoint` enum:
 - `TransferPrescriptionsScreen` - For internal use only. Don't use this, if you want to transfer prescription use `Iasdk.ordering.transferPrescriptions` method
 - `LegalDisclaimerScreen` - Legal disclaimers and terms
 - `PrerequisiteFlow` - Onboarding and legal flow
+- `ThankYouScreen` - Thank you screen shown after successful checkout
 
 ### 6. Advanced Features
 
@@ -457,7 +458,7 @@ fun MainActivity() {
                 // SDK screens
                 composable<HostAppRoute.SdkSearchScreen> {
                     IaSdkScreen(
-                        sdkEntryPoint = SdkEntryPoint.SearchScreen,
+                        sdkEntryPoint = IaScreen.SearchScreen,
                         onNavigateToEntryPoint = { targetEntryPoint ->
                             // Handle navigation to other SDK screens
                             when (targetEntryPoint) {
@@ -472,15 +473,15 @@ fun MainActivity() {
                 }
 
                 composable<HostAppRoute.SdkCartScreen> {
-                    IaSdkScreen(sdkEntryPoint = SdkEntryPoint.CartScreen)
+                    IaSdkScreen(sdkEntryPoint = IaScreen.CartScreen)
                 }
 
                 composable<HostAppRoute.SdkPharmacyScreen> {
-                    IaSdkScreen(sdkEntryPoint = SdkEntryPoint.PharmacyScreen)
+                    IaSdkScreen(sdkEntryPoint = IaScreen.PharmacyScreen)
                 }
 
                 composable<HostAppRoute.SdkStartScreen> {
-                    IaSdkScreen(sdkEntryPoint = SdkEntryPoint.StartScreen)
+                    IaSdkScreen(sdkEntryPoint = IaScreen.StartScreen)
                 }
             }
 
@@ -532,12 +533,12 @@ Choose the mode based on your integration needs:
 ```kotlin
 // Embedded - for seamless integration
 IaSdkScreen(
-    sdkEntryPoint = SdkEntryPoint.SearchScreen,
+    sdkEntryPoint = IaScreen.SearchScreen,
     presentationMode = PresentationMode.EMBEDDED
 )
 
 // Full flow - for separate activity
-IaSdkActivity.start(context, SdkEntryPoint.StartScreen)
+IaSdkActivity.start(context, IaScreen.StartScreen)
 
 // Transfer prescription as overlay
 IaSdk.ordering.transferPrescription(
@@ -561,10 +562,10 @@ IaSdk.ordering.transferPrescription(
 - **`IaSdkScreen`** - Composable for embedding SDK screens
 - **`IaSdkActivity`** - Activity for launching SDK in full-flow mode
 - **`IaSdkView`** - Factory for creating SDK views for traditional View hierarchies
-- **`SdkEntryPoint`** - Enum defining all available SDK screens
 - **`PresentationMode`** - Enum defining how SDK screens are presented
 - **`IaSdkConfiguration`** - Configuration options for SDK initialization
 - **`InitState`** - Observable state for monitoring SDK initialization
+- **`IaScreen`** - Object defining all available SDK screens
 
 ### 10. API Reference
 
@@ -607,7 +608,7 @@ IaSdk.ordering.transferPrescription(
 
 **Navigation not working?**
 
-- Verify you're using the correct `SdkEntryPoint` for your desired screen
+- Verify you're using the correct `IaScreen` for your desired screen
 - Ensure SDK modules for required features are registered
 - Check that `onNavigateToEntryPoint` callback is properly implemented for tab navigation
 
