@@ -236,7 +236,7 @@ fun MainActivity() {
                         onNavigateToEntryPoint = { targetEntryPoint ->
                             // Handle navigation to other SDK screens
                             when (targetEntryPoint) {
-                                SdkEntryPoint.CartScreen -> {
+                                IaScreen.CartScreen -> {
                                     navController.navigate(HostAppRoute.SdkCartScreen)
                                     true // Navigation handled
                                 }
@@ -247,15 +247,15 @@ fun MainActivity() {
                 }
 
                 composable<HostAppRoute.SdkCartScreen> {
-                    IaSdkScreen(sdkEntryPoint = SdkEntryPoint.CartScreen)
+                    IaSdkScreen(sdkEntryPoint = IaScreen.CartScreen)
                 }
 
                 composable<HostAppRoute.SdkPharmacyScreen> {
-                    IaSdkScreen(sdkEntryPoint = SdkEntryPoint.PharmacyScreen)
+                    IaSdkScreen(sdkEntryPoint = IaScreen.PharmacyScreen)
                 }
 
                 composable<HostAppRoute.SdkStartScreen> {
-                    IaSdkScreen(sdkEntryPoint = SdkEntryPoint.StartScreen)
+                    IaSdkScreen(sdkEntryPoint = IaScreen.StartScreen)
                 }
             }
 
@@ -280,7 +280,7 @@ Button(
     onClick = {
         IaSdkActivity.start(
             context = context,
-            view = SdkEntryPoint.StartScreen
+            view = IaScreen.StartScreen
         )
     }
 ) {
@@ -290,7 +290,7 @@ Button(
 // With custom back action handling
 IaSdkActivity.start(
     context = context,
-    view = SdkEntryPoint.CartScreen,
+    view = IaScreen.CartScreen,
     onBackAction = {
         // Custom logic before closing
         // Return true to close activity, false to prevent closing
@@ -312,7 +312,7 @@ class MyFragment : Fragment() {
     ): View {
         return IaSdkView.createView(
             context = requireContext(),
-            sdkEntryPoint = SdkEntryPoint.SearchScreen
+            sdkEntryPoint = IaScreen.SearchScreen
         )
     }
 }
