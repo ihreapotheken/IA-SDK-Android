@@ -13,6 +13,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import de.ihreapotheken.sdk.integrations.api.view.IaScreen
 import de.ihreapotheken.sdk.integrations.api.view.IaSdkActivity
 import de.ihreapotheken.sdk.integrations.api.view.SdkEntryPoint
 
@@ -39,7 +40,7 @@ fun StartSdkScreen() {
             Button(onClick = {
                 IaSdkActivity.start(
                     context = context,
-                    view = SdkEntryPoint.StartScreen
+                    view = IaScreen.StartScreen
                 )
             }) {
                 Text("Start SDK in new Activity")

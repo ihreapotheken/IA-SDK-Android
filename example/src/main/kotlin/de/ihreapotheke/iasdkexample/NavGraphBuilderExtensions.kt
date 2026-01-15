@@ -4,8 +4,10 @@ import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.composable
 import androidx.navigation.navigation
+import de.ihreapotheken.sdk.integrations.api.view.IaScreen
 import de.ihreapotheken.sdk.integrations.api.view.IaSdkScreen
 import de.ihreapotheken.sdk.integrations.api.view.SdkEntryPoint
+import de.ihreapotheken.sdk.integrations.api.view.SdkNavigationTarget
 
 fun NavGraphBuilder.hostapp(navController: NavHostController) {
     composable<HostAppRoute.MainScreen> {
@@ -20,29 +22,29 @@ fun NavGraphBuilder.hostapp(navController: NavHostController) {
 
     composable<HostAppRoute.SdkStartScreen> {
         IaSdkScreen(
-            sdkEntryPoint = SdkEntryPoint.StartScreen,
-            onNavigateToEntryPoint = createEntryPointNavigationHandler(navController)
+            sdkEntryPoint = IaScreen.StartScreen,
+            onNavigateToTarget = createEntryPointNavigationHandler(navController)
         )
     }
 
     composable<HostAppRoute.SdkSearchScreen> {
         IaSdkScreen(
-            sdkEntryPoint = SdkEntryPoint.SearchScreen,
-            onNavigateToEntryPoint = createEntryPointNavigationHandler(navController)
+            sdkEntryPoint = IaScreen.SearchScreen,
+            onNavigateToTarget = createEntryPointNavigationHandler(navController)
         )
     }
 
     composable<HostAppRoute.SdkCartScreen> {
         IaSdkScreen(
-            sdkEntryPoint = SdkEntryPoint.CartScreen,
-            onNavigateToEntryPoint = createEntryPointNavigationHandler(navController)
+            sdkEntryPoint = IaScreen.CartScreen,
+            onNavigateToTarget = createEntryPointNavigationHandler(navController)
         )
     }
 
     composable<HostAppRoute.SdkPharmacyScreen> {
         IaSdkScreen(
-            sdkEntryPoint = SdkEntryPoint.PharmacyScreen,
-            onNavigateToEntryPoint = createEntryPointNavigationHandler(navController)
+            sdkEntryPoint = IaScreen.PharmacyScreen,
+            onNavigateToTarget = createEntryPointNavigationHandler(navController)
         )
     }
 }
@@ -60,24 +62,24 @@ fun NavGraphBuilder.hostapp(navController: NavHostController) {
  */
 private fun createEntryPointNavigationHandler(
     navController: NavHostController
-): (SdkEntryPoint) -> Boolean = { targetEntryPoint ->
+): (SdkNavigationTarget) -> Boolean = { targetEntryPoint ->
     when (targetEntryPoint) {
-        SdkEntryPoint.StartScreen -> {
+        IaScreen.StartScreen -> {
             navController.navigate(HostAppRoute.SdkStartScreen)
             true
         }
 
-        SdkEntryPoint.SearchScreen -> {
+        IaScreen.SearchScreen -> {
             navController.navigate(HostAppRoute.SdkSearchScreen)
             true
         }
 
-        SdkEntryPoint.CartScreen -> {
+        IaScreen.CartScreen -> {
             navController.navigate(HostAppRoute.SdkCartScreen)
             true
         }
 
-        SdkEntryPoint.PharmacyScreen -> {
+        IaScreen.PharmacyScreen -> {
             navController.navigate(HostAppRoute.SdkPharmacyScreen)
             true
         }
