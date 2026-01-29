@@ -615,3 +615,8 @@ IaSdk.ordering.transferPrescription(
 **Cart not updating?**
 
 - Verify ordering module is registered: `IaSdk.register(OrderingModule)`
+
+### 12. Usage and Testing FAQ
+
+For information on server environments, testing credentials, access requirements, and bug reporting guidelines, 
+see the [Usage and Testing documentation](https://ihreapotheken.github.io/docs/appsdk/common/usage-and-testing).
