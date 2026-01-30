@@ -1,10 +1,37 @@
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+import java.util.Properties
 
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.kotlin.serialization)
+}
+
+fun getAppSdkAccessKey(): String {
+    // Try to load from .env file first
+    val envFile = rootProject.file(".env")
+    if (envFile.exists()) {
+        val properties = Properties()
+        envFile.inputStream().use { properties.load(it) }
+        val key = properties.getProperty("APPSDK_ACCESS_KEY")
+        if (!key.isNullOrBlank()) {
+            return key
+        }
+    }
+
+    // Fall back to environment variable (GitHub Actions secret)
+    val envKey = System.getenv("APPSDK_ACCESS_KEY")
+    if (!envKey.isNullOrBlank()) {
+        return envKey
+    }
+
+    // Neither .env file nor environment variable found
+    throw GradleException(
+        "APPSDK_ACCESS_KEY not found. Please provide it via:\n" +
+        "  1. A .env file in the project root with APPSDK_ACCESS_KEY=<your-key>\n" +
+        "  2. An environment variable APPSDK_ACCESS_KEY (used by GitHub Actions)"
+    )
 }
 
 android {
@@ -17,8 +44,12 @@ android {
         targetSdk = 36
         versionCode = 1
         versionName = "1.0"
-
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        buildConfigField(
+            "String",
+            "APPSDK_ACCESS_KEY",
+            "\"${getAppSdkAccessKey()}\"",
+        )
     }
 
     buildTypes {
@@ -55,6 +86,7 @@ android {
 
     buildFeatures {
         compose = true
+        buildConfig = true
     }
 }
 
