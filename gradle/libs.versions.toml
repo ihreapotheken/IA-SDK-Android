@@ -6,7 +6,7 @@ lifecycleRuntimeKtx = "2.9.2"
 activityCompose = "1.10.1"
 composeBom = "2025.04.00"
 kotlinxSerialization = "1.9.0"
-iasdk = "0.0.21-8"
+iasdk = "0.0.21-10"
 navigationCompose = "2.9.6"
 
 [libraries]

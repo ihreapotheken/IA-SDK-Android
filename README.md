@@ -11,6 +11,41 @@ Latest version of IA SDK is `0.0.21-10`.
 
 - min SDK: `30`
 
+## Running the Example Apps
+
+The example apps (`example`, `example2`, `example3`) require an API access key to run.
+
+### Local Development
+
+Create a `.env` file in the project root with your API key:
+
+```
+APPSDK_ACCESS_KEY=your_api_key_here
+```
+
+> [!IMPORTANT]
+> The `.env` file is git-ignored and should never be committed. Each developer needs to create their own.
+
+### CI/CD (GitHub Actions)
+
+For CI/CD pipelines, the build will automatically use the `APPSDK_ACCESS_KEY` environment variable when the `.env` file is not present.
+
+Add the secret to your GitHub repository:
+1. Go to repository Settings → Secrets and variables → Actions
+2. Create a new repository secret named `APPSDK_ACCESS_KEY`
+
+The example workflow passes the secret as an environment variable:
+
+```yaml
+- name: Build with Gradle
+  env:
+    APPSDK_ACCESS_KEY: ${{ secrets.APPSDK_ACCESS_KEY }}
+  run: ./gradlew build
+```
+
+> [!NOTE]
+> If neither the `.env` file nor the environment variable is found, the build will fail with an error message.
+
 ## Quick Start
 
 ### 1. Adding repository
@@ -615,3 +650,8 @@ IaSdk.ordering.transferPrescription(
 **Cart not updating?**
 
 - Verify ordering module is registered: `IaSdk.register(OrderingModule)`
+
+### 12. Usage and Testing FAQ
+
+For information on server environments, testing credentials, access requirements, and bug reporting guidelines, 
+see the [Usage and Testing documentation](https://ihreapotheken.github.io/docs/appsdk/common/usage-and-testing).

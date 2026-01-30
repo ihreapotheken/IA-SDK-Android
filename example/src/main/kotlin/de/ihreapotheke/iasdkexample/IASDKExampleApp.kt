@@ -32,8 +32,8 @@ class IASDKExampleApp : Application(), SdkEventListener {
             .init(
                 context = applicationContext,
                 environmentType = EnvironmentType.STAGING,
-                apiKey = "a1f4b6e3c7d58f9032eeaa1bc02b4f44f9863d1e5c7a49f7d23e0c96b17af5cd",
-                clientId = "5004",
+                apiKey = BuildConfig.APPSDK_ACCESS_KEY,
+                clientId = "6001",
                 configuration = IaSdkConfiguration(
                     shouldFetchThemeFromRemote = true,
                     prerequisiteFlowConfiguration = PrerequisiteFlowConfiguration(
