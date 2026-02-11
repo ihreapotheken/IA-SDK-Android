@@ -9,7 +9,30 @@ Latest version of IA SDK is `0.0.21-10`.
 
 ## Requirements
 
-- min SDK: `30`
+### Android SDK
+- **Minimum SDK**: `30` (Android 11)
+- **Compile SDK**: `35`
+- **Target SDK**: `35`
+
+### Kotlin & Java
+- **Kotlin**: `2.1.10` or higher
+- **Java**: `17` (source and target compatibility)
+
+### Jetpack Compose
+- **Compose BOM**: `2025.04.00` or compatible
+- **Compose UI**: `1.9.4`
+- **Compose Runtime**: `1.9.4`
+- **Material3**: `1.4.0`
+- **Activity Compose**: `1.10.0`
+- **Navigation Compose**: `2.8.9`
+
+### Build Tools
+- **Android Gradle Plugin (AGP)**: `8.6.1` or higher
+
+### Integration Limitations
+- The SDK requires Jetpack Compose. View-based integration is supported via `IaSdkView`, but the underlying implementation uses Compose.
+- Kotlin version must be compatible with Compose compiler. The SDK is tested with Kotlin `2.1.10`.
+- Projects targeting SDK versions below 30 cannot integrate the SDK.
 
 ## Running the Example Apps
 
@@ -191,7 +214,7 @@ class MyApp : Application(), SdkEventListener {
 
 > [!IMPORTANT]
 > Module registration is required before calling `init()`. Available modules include: `OtcModule`, `OrderingModule`,
-`PharmacyModule`, `RxModule`, `CardlinkModule`.
+`PharmacyModule`, `RxModule`, `CardlinkModule`, `ApofinderModule`.
 
 > [!NOTE]
 > `SdkEventListener` doesn't necessarily need to be set at the startup, it can  also be set later with `IaSdk.setEventListener(...)`.
