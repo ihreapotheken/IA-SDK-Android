@@ -5,7 +5,7 @@ plug-and-play UI and communication with backed services.
 
 # Latest version
 
-Latest version of IA SDK is `2.0.0-2`.
+Latest version of IA SDK is `2.0.0-6`.
 
 ## Requirements
 
