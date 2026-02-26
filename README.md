@@ -5,7 +5,7 @@ plug-and-play UI and communication with backed services.
 
 # Latest version
 
-Latest version of IA SDK is `2.0.0-2`.
+Latest version of IA SDK is `2.0.0-6`.
 
 ## Requirements
 
@@ -455,6 +455,41 @@ IaSdk.ordering.transferPrescription(
 )
 ```
 
+#### Transferring SDK v1 User Data
+
+If your app previously used SDK v1 and you want to preserve user data (pharmacy selection, guest info, search history) after upgrading to v2, call `transferSDKv1UserData` **before** `init()`:
+
+```kotlin
+class MyApp : Application() {
+    override fun onCreate() {
+        super.onCreate()
+
+        IaSdk.register(/* your modules */)
+
+        // Transfer v1 user data before init (runs once, no-op if no v1 data)
+        IaSdk.transferSDKv1UserData(this)
+
+        // Initialize SDK
+        IaSdk.init(
+            context = applicationContext,
+            // ... your configuration
+        )
+    }
+}
+```
+
+> [!NOTE]
+> This method is optional — only needed when migrating from SDK v1 to v2.
+> It runs only once. Subsequent calls are no-ops after a successful transfer.
+> No completion callback is needed — `init()` synchronizes with the transfer internally.
+
+**Data transferred from v1:**
+- Device ID
+- Selected pharmacy and pharmacy history
+- Guest user information (name, email, phone)
+- Product search history
+- Apofinder search history
+
 #### Managing Cart
 
 ```kotlin
@@ -642,6 +677,7 @@ IaSdk.ordering.transferPrescription(
 - `setHostUiConfig(config: HostUiConfig?)` - Update UI configuration
 - `isInitialized(): Boolean` - Check if SDK is initialized
 - `clearAllData(): Boolean` - Clear all SDK data
+- `transferSDKv1UserData(context: Context)` - Transfer user data from SDK v1 to v2 (call before `init`)
 - `setImpressumClickListener(listener: SdkImpressumListener)` - Set impressum listener
 - `setShowDataProcessingClickListener(listener: SdkShowDataProcessingListener)` - Set data processing listener
 
