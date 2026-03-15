@@ -712,5 +712,10 @@ IaSdk.ordering.transferPrescription(
 
 ### 12. Usage and Testing FAQ
 
-For information on server environments, testing credentials, access requirements, and bug reporting guidelines, 
+For information on server environments, testing credentials, access requirements, and bug reporting guidelines,
 see the [Usage and Testing documentation](https://ihreapotheken.github.io/docs/appsdk/common/usage-and-testing).
+
+## Legal Documents
+
+- [Legal Musterformulierungen](legal/Legal_Musterformulierungen.docx)
+- [Legal Requirements](legal/Legal_Requirements.docx)
