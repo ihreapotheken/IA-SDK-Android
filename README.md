@@ -5,7 +5,9 @@ plug-and-play UI and communication with backed services.
 
 # Latest version
 
-Latest version of IA SDK is `2.2.0`.
+Latest version of IA SDK: 
+
+![Stable](https://img.shields.io/github/v/release/ihreapotheken/IA-SDK-Android?label=stable)
 
 ## Requirements
 
