@@ -7,7 +7,8 @@ plug-and-play UI and communication with backed services.
 
 Latest version of IA SDK: 
 
-![Stable](https://img.shields.io/github/v/release/ihreapotheken/IA-SDK-Android?label=stable)
+![GitHub Release](https://img.shields.io/github/v/release/ihreapotheken/IA-SDK-Android?style=for-the-badge&label=STABLE&color=green)
+
 
 ## Requirements
 
