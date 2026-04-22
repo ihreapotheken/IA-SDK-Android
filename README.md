@@ -265,7 +265,7 @@ IaSdk.ordering.setCheckoutListener(object : CheckoutListener {
 
 ### 4. SDK Integration Modes
 
-The SDK supports three integration modes:
+The SDK supports four integration modes:
 
 #### A. Embedded Mode (Composable)
 
@@ -376,6 +376,89 @@ class MyFragment : Fragment() {
             sdkEntryPoint = IaScreen.SearchScreen
         )
     }
+}
+```
+
+#### D. SDK Components (Composable)
+
+In addition to full SDK screens, the SDK exposes individual UI components that you can place
+anywhere in your Compose layouts. These are standalone composables that provide specific SDK
+functionality without rendering an entire screen.
+
+> [!IMPORTANT]
+> Before rendering any SDK component, the SDK automatically validates that all prerequisites
+> are fulfilled (onboarding, pharmacy selection, legal agreements — depending on your
+> `PrerequisiteFlowConfiguration`). If the prerequisites have not been completed yet,
+> the SDK will launch the prerequisite flow. If the user completes it, the component renders
+> normally. If the user dismisses or cancels the prerequisite flow, an error state with a
+> retry button is shown in place of the component. This behavior is handled internally —
+> no additional setup is required from the host app.
+
+##### IaProductGrid
+
+Displays a product grid with a title and a "load more" action. Can be placed inside any host-app screen.
+
+```kotlin
+@Composable
+fun IaProductGrid(
+    productType: ProductType,
+    bottomPadding: Dp = 0.dp,
+    showLoading: Boolean = true,
+)
+```
+
+**Parameters:**
+- `productType` — determines which products are loaded and displayed. Available types:
+  - `ProductType.CurrentOffers` — current offers
+  - `ProductType.ProductOfTheMonths` — products of the month
+  - `ProductType.ProductRecommendations(pzn: String)` — recommendations based on a product PZN
+  - `ProductType.CustomersAlsoBought(pzn: String)` — "customers also bought" based on a product PZN
+  - `ProductType.Custom(title: String, pzns: List<String>)` — custom list of products by PZN with a custom title
+- `bottomPadding` — extra bottom padding applied to grid content. Defaults to `0.dp`
+- `showLoading` — when `true`, displays a loading indicator while products are being fetched. Defaults to `true`
+
+**Example:**
+```kotlin
+// Display current offers
+IaProductGrid(
+    productType = ProductType.CurrentOffers,
+    showLoading = false,
+)
+
+// Display a custom product list
+IaProductGrid(
+    productType = ProductType.Custom(
+        title = "Custom Products",
+        pzns = listOf("06680881", "04460328", "02588163", "00067286")
+    ),
+    showLoading = true,
+)
+```
+
+##### IaCartButton
+
+A floating cart button that displays the current cart item count and navigates to the cart screen.
+
+```kotlin
+@Composable
+fun IaCartButton(
+    modifier: Modifier,
+    onClick: (() -> Unit)? = null,
+)
+```
+
+**Parameters:**
+- `modifier` — modifier applied to the cart button
+- `onClick` — optional callback invoked when the button is tapped. When provided, the SDK's default navigation is suppressed. If `null`, the SDK opens the cart in a new Activity
+
+**Example:**
+```kotlin
+// Let the SDK handle cart navigation
+IaCartButton(modifier = Modifier.size(80.dp))
+
+// Handle navigation yourself
+IaCartButton(modifier = Modifier.size(80.dp)) {
+    navController.navigate(HostAppRoute.SdkCartScreen)
 }
 ```
 
@@ -618,22 +701,24 @@ fun MainActivity() {
 
 ### 8. Presentation Modes
 
-The SDK supports three presentation modes:
+The SDK supports three presentation modes that control **navigation UI behavior** (such as whether a back button is displayed). Presentation mode does **not** affect screen size, layout, or visual rendering — it only determines which navigation elements are shown based on how your app handles screen switching.
 
-- **`PresentationMode.EMBEDDED`** (default) - SDK screens are embedded in your navigation graph
-- **`PresentationMode.FULL_FLOW`** - SDK screens open in a new activity with their own navigation
-- **`PresentationMode.OVERLAY`** - SDK screens open as an overlay (useful for prescription transfer)
+- **`PresentationMode.EMBEDDED`** (default) — Use when each SDK first-level screen is placed as a **separate tab** in your bottom navigation. In this mode, the SDK **hides the back button** because bottom navigation tabs already allow the user to switch between screens.
 
-Choose the mode based on your integration needs:
+- **`PresentationMode.FULL_FLOW`** — Use when you open SDK screens in a **new activity** or place all first-level SDK screens under a **single tab** in your bottom navigation. In this mode, the SDK **shows a back button** so the user can navigate between SDK screens within that flow.
+
+- **`PresentationMode.OVERLAY`** — For short-lived flows (e.g., prescription transfer) displayed as a bottom sheet overlay on top of your current UI.
+
+Choose the mode based on how your app's navigation is structured:
 
 ```kotlin
-// Embedded - for seamless integration
+// Embedded - each SDK screen is its own tab in bottom navigation (no back button)
 IaSdkScreen(
     sdkEntryPoint = IaScreen.SearchScreen,
     presentationMode = PresentationMode.EMBEDDED
 )
 
-// Full flow - for separate activity
+// Full flow - SDK screens in a new activity or grouped under one tab (back button visible)
 IaSdkActivity.start(context, IaScreen.StartScreen)
 
 // Transfer prescription as overlay
@@ -658,6 +743,9 @@ IaSdk.ordering.transferPrescription(
 - **`IaSdkScreen`** - Composable for embedding SDK screens
 - **`IaSdkActivity`** - Activity for launching SDK in full-flow mode
 - **`IaSdkView`** - Factory for creating SDK views for traditional View hierarchies
+- **`IaProductGrid`** - Composable for displaying a product grid within host-app screens
+- **`IaCartButton`** - Composable floating cart button with item count
+- **`ProductType`** - Sealed interface defining product grid content types
 - **`PresentationMode`** - Enum defining how SDK screens are presented
 - **`IaSdkConfiguration`** - Configuration options for SDK initialization
 - **`InitState`** - Observable state for monitoring SDK initialization
