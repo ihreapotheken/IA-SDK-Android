@@ -470,10 +470,21 @@ The SDK provides the following entry points via `IaScreen` object:
 - `SearchScreen` - Product search functionality
 - `CartScreen` - Shopping cart and checkout
 - `PharmacyScreen` - Selected pharmacy details
+- `ApofinderScreen` - Apofinder (pharmacy selection) screen. Emits a typed `IaSdkResult.PharmacySelected` result. See [Standalone Apofinder Screen](#standalone-apofinder-screen).
+- `RedeemPrescription` - Redeem Prescription screen that lists the available redemption methods (CardLink / NFC, prescription photo, QR code). See [Redeem Prescription Screen](#redeem-prescription-screen).
 - `TransferPrescriptionsScreen` - For internal use only. Don't use this, if you want to transfer prescription use `Iasdk.ordering.transferPrescriptions` method
 - `LegalDisclaimerScreen` - Legal disclaimers and terms
 - `PrerequisiteFlow` - Onboarding and legal flow
 - `ThankYouScreen` - Thank you screen shown after successful checkout
+
+#### Entry-point result types
+
+`SdkEntryPoint<R>` carries the result type produced by that entry point at the type level:
+
+- **Fire-and-forget entry points** declare `SdkEntryPoint<Nothing?>` and produce no result (e.g., `StartScreen`, `CartScreen`, `RedeemPrescription`).
+- **Result-producing entry points** declare a concrete `IaSdkResult` subtype (e.g., `ApofinderScreen : SdkEntryPoint<IaSdkResult.PharmacySelected>`).
+
+When you pass a result-producing entry point to `IaSdkScreen` or `IaSdkActivity.start`, the `onResult` callback is typed accordingly — no runtime `when`-switch is needed.
 
 ### 6. Advanced Features
 
@@ -540,6 +551,146 @@ IaSdk.ordering.transferPrescription(
     }
 )
 ```
+
+#### Standalone Apofinder Screen
+
+Apofinder (pharmacy selection) can be embedded as a **standalone screen** — for example as a dedicated "Find pharmacy" tab in your bottom navigation, or as a destination launched from your own UI. The selected pharmacy is delivered to the host via the typed `onResult` callback.
+
+**Requirements:**
+- Register `ApofinderModule` before `IaSdk.init(...)`:
+  ```kotlin
+  IaSdk.register(ApofinderModule, /* other modules */)
+  ```
+
+**Embedded (Compose):**
+
+```kotlin
+IaSdkScreen(
+    sdkEntryPoint = IaScreen.ApofinderScreen,
+    onResult = { result ->
+        // result is typed as IaSdkResult.PharmacySelected
+        hostViewModel.onPharmacySelected(result.pharmacyId)
+    },
+    onFinish = { /* user dismissed the flow */ },
+)
+```
+
+> [!NOTE]
+> When `onResult` is invoked from `IaSdkScreen`, the SDK does **not** auto-close or navigate.
+> The host is responsible for what comes next (close the host screen, switch tabs, etc.).
+> The selected pharmacy is already persisted by the SDK before the callback fires.
+
+**Full-flow Activity:**
+
+```kotlin
+IaSdkActivity.start(
+    context = context,
+    view = IaScreen.ApofinderScreen,
+    onResult = { result ->
+        Toast.makeText(context, "Selected: ${result.pharmacyId}", Toast.LENGTH_SHORT).show()
+    },
+)
+```
+
+> [!NOTE]
+> When launched via `IaSdkActivity.start`, the activity finishes automatically after `onResult` is invoked.
+
+#### Redeem Prescription Screen
+
+`IaScreen.RedeemPrescription` exposes the prescription-redemption hub as a standalone screen. It renders up to three sections, each gated on what your app has registered:
+
+- **Electronic health card (CardLink / NFC)** — visible only when a CardLink feature provider is registered, the device supports NFC, and the currently selected pharmacy has CardLink enabled.
+- **Prescription photo** — visible only when `RxModule` is registered. Opens the prescription camera.
+- **QR code (e-prescription)** — visible only when `RxModule` is registered. Opens the QR scanner.
+
+If none of the sections are available, the screen renders informational messages instead.
+
+**Requirements:**
+- Register the modules for the redemption methods you want to expose (`RxModule` for photo/QR, plus the CardLink feature provider for NFC).
+- The standard prerequisite chain (onboarding, legal, pharmacy selection) still runs before the screen opens if not already completed.
+
+**Embedded (Compose):**
+
+```kotlin
+IaSdkScreen(
+    sdkEntryPoint = IaScreen.RedeemPrescription,
+    onFinish = { navController.popBackStack() },
+)
+```
+
+**Full-flow Activity:**
+
+```kotlin
+IaSdkActivity.start(
+    context = context,
+    view = IaScreen.RedeemPrescription,
+)
+```
+
+`RedeemPrescription` is a fire-and-forget entry point (`SdkEntryPoint<Nothing?>`) — it does not deliver a typed result. Use `onFinish` (embedded) or `onBackAction` (activity) to react to the user closing the flow.
+
+#### Prerequisite Flow Callback
+
+`IaSdkScreen` exposes an optional `onPrerequisiteResult` callback so the host can react to the terminal state of the prerequisite flow (onboarding, legal, pharmacy selection). It fires once the flow settles, **including** when prerequisites were already completed in a previous session and no UI ran this time.
+
+```kotlin
+enum class PrerequisiteResult {
+    COMPLETED,  // prerequisites are satisfied (just completed or already done)
+    CANCELLED,  // user backed out or explicitly cancelled the flow
+}
+```
+
+**Registering the callback:**
+
+```kotlin
+IaSdkScreen(
+    sdkEntryPoint = IaScreen.StartScreen,
+    presentationMode = PresentationMode.FULL_FLOW,
+    onFinish = { sdkOpen = false },
+    onPrerequisiteResult = { result ->
+        when (result) {
+            PrerequisiteResult.COMPLETED -> false       // let SDK render its content
+            PrerequisiteResult.CANCELLED -> {
+                sdkOpen = false                          // host dismisses the SDK surface
+                true                                     // tell SDK to suppress its default UI
+            }
+        }
+    },
+)
+```
+
+**Return-value semantics (`handled` / `not handled`):**
+
+The `Boolean` returned by the callback is honored **only for `CANCELLED`**:
+
+| Result      | Return `true` (handled)                                                                       | Return `false` (not handled)                                                          |
+|-------------|-----------------------------------------------------------------------------------------------|---------------------------------------------------------------------------------------|
+| `COMPLETED` | Ignored — SDK always proceeds to render its content.                                          | Same — SDK renders content.                                                           |
+| `CANCELLED` | SDK renders an empty composable in place of its retry view — host owns the next UX step.      | SDK falls back to its built-in retry screen with an activation button.                |
+
+**Auto-close in full-flow mode:**
+When the SDK is launched via `IaSdkActivity.start(...)`, the activity registers a default cancel handler that returns `true` and calls `finish()` — so the SDK activity closes automatically if the user cancels the prerequisite flow.
+
+**Checking prerequisite state imperatively:**
+
+`IaSdk` exposes a suspend snapshot of the prerequisite state. Use it to gate whether you should mount an `IaSdkScreen` at all (e.g., show your own pre-onboarding UI first):
+
+```kotlin
+suspend fun isPrerequisiteFlowCompleted(): Boolean
+```
+
+```kotlin
+// In a coroutine scope (e.g., lifecycleScope)
+lifecycleScope.launch {
+    if (IaSdk.isPrerequisiteFlowCompleted()) {
+        navController.navigate(HostAppRoute.SdkStartScreen)
+    } else {
+        showOnboardingTeaser()
+    }
+}
+```
+
+Returns `true` if onboarding, legal, and pharmacy selection are all satisfied; `false` otherwise (including when the SDK is not initialized).
 
 #### Transferring SDK v1 User Data
 
@@ -750,6 +901,8 @@ IaSdk.ordering.transferPrescription(
 - **`IaSdkConfiguration`** - Configuration options for SDK initialization
 - **`InitState`** - Observable state for monitoring SDK initialization
 - **`IaScreen`** - Object defining all available SDK screens
+- **`IaSdkResult`** - Sealed interface of typed results emitted by result-producing entry points (e.g., `IaSdkResult.PharmacySelected` from `ApofinderScreen`)
+- **`PrerequisiteResult`** - Enum delivered to `onPrerequisiteResult` (`COMPLETED` / `CANCELLED`)
 
 ### 10. API Reference
 
@@ -767,6 +920,7 @@ IaSdk.ordering.transferPrescription(
 - `setUserData(user: GuestUser?)` - Set/update user data
 - `setHostUiConfig(config: HostUiConfig?)` - Update UI configuration
 - `isInitialized(): Boolean` - Check if SDK is initialized
+- `isPrerequisiteFlowCompleted(): Boolean` - Suspend snapshot of whether onboarding, legal, and pharmacy selection are all satisfied. See [Prerequisite Flow Callback](#prerequisite-flow-callback)
 - `clearAllData(): Boolean` - Clear all SDK data
 - `transferSDKv1UserData(context: Context)` - Transfer user data from SDK v1 to v2 (call before `init`)
 - `setImpressumClickListener(listener: SdkImpressumListener)` - Set impressum listener
