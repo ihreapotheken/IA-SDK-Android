@@ -1,7 +1,7 @@
 # Android IASDK documentation
 
 **IASDK** is Android SDK that helps integrate IhreApotheken into your app by providing
-plug-and-play UI and communication with backed services.
+plug-and-play UI and communication with backend services.
 
 # Latest version
 
@@ -13,29 +13,39 @@ Latest version of IA SDK:
 ## Requirements
 
 ### Android SDK
-- **Minimum SDK**: `30` (Android 11)
-- **Compile SDK**: `35`
-- **Target SDK**: `35`
+- **Minimum SDK**: `27` (Android 8.1)
+- **Compile SDK**: `36`
+- **Target SDK**: `36`
+
+> [!NOTE]
+> The `cardlink` module (electronic health card / NFC) requires **Android 11 (API 30)** at runtime and declares
+> `minSdk 30`. Apps with a lower `minSdk` can still include it, see [CardLink requirements](#cardlink-requirements).
+> All other modules work from API 27.
 
 ### Kotlin & Java
 - **Kotlin**: `2.1.10` or higher
 - **Java**: `17` (source and target compatibility)
 
 ### Jetpack Compose
-- **Compose BOM**: `2025.04.00` or compatible
+The SDK is built with the following Compose artifacts. They are the **minimum** versions your project resolves to;
+if your app uses newer versions Gradle picks the newer ones.
 - **Compose UI**: `1.9.4`
 - **Compose Runtime**: `1.9.4`
 - **Material3**: `1.4.0`
 - **Activity Compose**: `1.10.0`
-- **Navigation Compose**: `2.8.9`
+- **Navigation Compose**: `2.9.7`
+
+> [!NOTE]
+> If you manage Compose through the Compose BOM, use a BOM that maps to Compose UI `1.9.4` or newer.
 
 ### Build Tools
-- **Android Gradle Plugin (AGP)**: `8.6.1` or higher
+- **Android Gradle Plugin (AGP)**: `8.9.1` or higher (required for `compileSdk 36`; the SDK itself is built with `8.10.1`)
+- **Gradle**: `8.11.1` or higher
 
 ### Integration Limitations
 - The SDK requires Jetpack Compose. View-based integration is supported via `IaSdkView`, but the underlying implementation uses Compose.
 - Kotlin version must be compatible with Compose compiler. The SDK is tested with Kotlin `2.1.10`.
-- Projects targeting SDK versions below 30 cannot integrate the SDK.
+- Projects with `minSdk` below 27 cannot integrate the SDK. CardLink features are only available on Android 11+ devices.
 
 ## Running the Example Apps
 
@@ -74,17 +84,20 @@ The example workflow passes the secret as an environment variable:
 
 ## Quick Start
 
-### 1. Adding repository
+### 1. Adding repositories
 
-To add our maven repository hosted on github.com to your project, add following to `repositories`
-block in your `settings.gradle.kts` file:
+The SDK is published to GitHub Packages. It also needs the Mapbox repository (for the pharmacy map) and, only if you
+use the `cardlink` module, the Link4Health repository. Add the following to the `repositories` block in your
+`settings.gradle.kts` file:
 
 ```kotlin
 repositories {
+    // Mapbox Maps, used by the pharmacy finder (required for every integration)
     maven {
         url = uri("https://api.mapbox.com/downloads/v2/releases/maven")
     }
 
+    // IA SDK artifacts
     maven {
         name = "IA SDK repo"
         url = uri("https://maven.pkg.github.com/ihreapotheken/IA-SDK-Android")
@@ -93,14 +106,21 @@ repositories {
             password = System.getenv("GITHUB_TOKEN") ?: ""
         }
     }
+
+    // Link4Health CardLink SDK, only needed when you add the cardlink module
+    maven {
+        name = "Link4Health"
+        url = uri("https://nexus.link4.health/repository/link4health-releases/")
+        mavenContent { releasesOnly() }
+    }
 }
 ```
 
 To generate your access token, go to [GitHub settings page](https://github.com/settings/tokens)
 
 #### Optional
-If you want, you can instead using `System` environment variables use `local.properties` to store
-your credentials. Find `local.properties` file in root of your project and add the following
+Instead of `System` environment variables you can use `local.properties` to store your credentials.
+Find the `local.properties` file in the root of your project and add the following:
 
 ```properties
 github.username=<your user name>
@@ -137,6 +157,13 @@ repositories {
             password = githubToken
         }
     }
+
+    // only needed when you add the cardlink module
+    maven {
+        name = "Link4Health"
+        url = uri("https://nexus.link4.health/repository/link4health-releases/")
+        mavenContent { releasesOnly() }
+    }
 }
 ```
 
@@ -146,21 +173,53 @@ Add dependencies in your `build.gradle.kts` (app module) file:
 
 ```kotlin
 dependencies {
-    implementation("de.ihreapotheken.sdk:integrations")
+    // Required: base functionality, navigation, prerequisite flow, appointments, lab tests, scanner
+    implementation("de.ihreapotheken.sdk:integrations:<version>")
 
     // Only the feature UIs you need
-    implementation("de.ihreapotheken.sdk:otc:<version>")
-    implementation("de.ihreapotheken.sdk:ordering:<version>")
-    // other features...
+    implementation("de.ihreapotheken.sdk:otc:<version>")        // product search and product details
+    implementation("de.ihreapotheken.sdk:ordering:<version>")   // cart, checkout, orders, prescription transfer
+    implementation("de.ihreapotheken.sdk:rx:<version>")         // prescription photo / QR redemption
+    implementation("de.ihreapotheken.sdk:pharmacy:<version>")   // selected pharmacy screen
+    implementation("de.ihreapotheken.sdk:apofinder:<version>")  // pharmacy finder as a standalone screen
+    implementation("de.ihreapotheken.sdk:cardlink:<version>")   // electronic health card (NFC), see CARDLINK.md
 }
 ```
 > [!NOTE]
-> Change `<version>` with correct version.
-
+> Replace `<version>` with the SDK version, for example `2.9.0`. Use the same version for every module.
 
 > [!IMPORTANT]
-> Dependency for  `integrations` is required, it provides the base functionality for the SDK.
-> Add other dependencies for features that you want to use (otc, ordering ,rx ,pharmacy...)
+> `integrations` is required; it provides the base functionality of the SDK.
+> Add the other dependencies only for the features you want to use (otc, ordering, rx, pharmacy, apofinder, cardlink).
+
+#### CardLink requirements
+
+The `cardlink` module declares `minSdk 30`. If your app's `minSdk` is lower (the SDK itself supports 27), tell the
+manifest merger to accept it. CardLink checks the Android version at runtime and reports
+`failedToInitializeCardlink()` on devices below Android 11 instead of crashing.
+
+```xml
+<!-- AndroidManifest.xml -->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <uses-sdk tools:overrideLibrary="de.ihreapotheken.sdk.cardlink, de.link4health.cardlink.sdk, de.link4health.egk" />
+    ...
+</manifest>
+```
+
+The Link4Health SDK bundles BouncyCastle, which ships a duplicate `META-INF` file. Exclude it in your app module:
+
+```kotlin
+// build.gradle.kts (app module)
+android {
+    packaging {
+        resources {
+            excludes += "META-INF/versions/9/OSGI-INF/MANIFEST.MF"
+        }
+    }
+}
+```
 
 ### 3. SDK initialization
 
@@ -177,6 +236,7 @@ class MyApp : Application(), SdkEventListener {
 
         // Register the modules your app will use
         IaSdk.register(
+            IntegrationsModule,
             OtcModule,
             OrderingModule,
             PharmacyModule,
@@ -186,7 +246,7 @@ class MyApp : Application(), SdkEventListener {
         // Initialize SDK
         IaSdk.init(
             context = applicationContext,
-            environmentType = EnvironmentType.PRODUCTION, // or STAGING
+            environmentType = EnvironmentType.PROD, // or STAGING / DEV
             apiKey = "your_api_key",
             clientId = "your_client_id",
             configuration = IaSdkConfiguration(
@@ -206,6 +266,7 @@ class MyApp : Application(), SdkEventListener {
                 Log.d("App", "SDK initialized successfully")
             }
             is SdkEvent.InitError -> {
+                // ApiKeyNotValid, ApiKeyNotProvided, ClientIdNotProvided, NotInitialized, Generic
                 Log.e("App", "SDK initialization error: ${event.message}")
             }
             else -> { /* handle other events */
@@ -216,11 +277,31 @@ class MyApp : Application(), SdkEventListener {
 ```
 
 > [!IMPORTANT]
-> Module registration is required before calling `init()`. Available modules include: `OtcModule`, `OrderingModule`,
-`PharmacyModule`, `RxModule`, `CardlinkModule`, `ApofinderModule`.
+> Module registration is required before calling `init()`. `IntegrationsModule` is always required. Optional
+> modules: `OtcModule`, `OrderingModule`, `PharmacyModule`, `RxModule`, `ApofinderModule`, `CardlinkModule`.
+> Mandatory modules (appointments, lab tests, scanner, debug viewer, data) are added automatically.
 
 > [!NOTE]
-> `SdkEventListener` doesn't necessarily need to be set at the startup, it can  also be set later with `IaSdk.setEventListener(...)`.
+> `SdkEventListener` doesn't necessarily need to be set at the startup, it can also be set later with `IaSdk.setEventListener(...)`.
+> The full list of errors and how they reach your app is in [ERRORS.md](ERRORS.md).
+
+#### Configuration options
+
+`IaSdkConfiguration` is a data class with defaults for every parameter:
+
+| Parameter | Default | Description |
+|---|---|---|
+| `shouldFetchThemeFromRemote` | `false` | Load the pharmacy theme from the backend |
+| `prerequisiteFlowConfiguration` | `PrerequisiteFlowConfiguration()` | `shouldRunOnboarding` / `shouldRunLegal` switches for the prerequisite flow |
+| `channelId` | `null` | Channel identifier passed to the backend |
+| `shouldShowIndicator` | `false` | Show the SDK's own loading indicator |
+| `uiConfiguration` | `IAUIConfiguration()` | Header, button and illustration settings. `IAUIConfiguration(shouldShowMascotIllustrations = false)` hides the Pharmi mascot (white-label hosts) |
+| `isSaveCardEnabled` | `false` | Allow users to save their health card in CardLink |
+| `analyticsEnabled` | `false` | Emit analytics events to the `AnalyticsListener` |
+| `shouldUseApiKeyForMobileSettings` | `true` | Send the API key when loading mobile settings |
+| `playStoreId` | `null` | Your Play Store application id. When set, the force-update dialog gets an "Aktualisieren" button |
+| `hapticFeedbackEnabled` | `true` | Master switch for SDK haptic feedback, see [Haptic feedback](#haptic-feedback) |
+| `isPickupLockerAndCourierShippingEnabled` | `false` | Enable pickup-locker and courier delivery options and the "Widerruf" footer link |
 
 #### Monitoring Initialization State
 
@@ -237,6 +318,8 @@ lifecycleScope.launch {
             InitState.INITIALIZED -> {
                 // SDK is ready, configure additional settings
                 IaSdk.setHostUiConfig(HostUiConfig(showDataProcessing = true))
+            }
+            InitState.ERROR -> { /* initialization failed, see SdkEventListener for details */
             }
         }
     }
@@ -269,11 +352,35 @@ The SDK supports four integration modes:
 
 #### A. Embedded Mode (Composable)
 
-Embed SDK screens directly in your Compose navigation:
+Embed SDK screens directly in your Compose navigation. `IaSdkScreen` takes an entry point and optional callbacks:
 
 ```kotlin
 @Composable
-fun MainActivity() {
+fun <R : IaSdkResult?> IaSdkScreen(
+    sdkEntryPoint: SdkEntryPoint<R>,
+    presentationMode: PresentationMode = PresentationMode.EMBEDDED,
+    onNavigateToTarget: (suspend (SdkNavigationTarget) -> Boolean)? = null,
+    onResult: ((R & Any) -> Unit)? = null,
+    onFinish: () -> Unit = {},
+    onPrerequisiteResult: ((PrerequisiteResult) -> Boolean)? = null,
+)
+```
+
+`onNavigateToTarget` is called whenever the SDK is about to navigate to one of its first-level screens
+(`SdkNavigationTarget`: `IaScreen.StartScreen`, `CartScreen`, `SearchScreen`, `PharmacyScreen`, `ApofinderScreen`,
+`RedeemPrescription`, `ThankYouScreen`, `ThankYouScreenCompleted`). Return `true` when your app handled the
+navigation, `false` to let the SDK navigate internally.
+
+```kotlin
+class MainActivity : ComponentActivity() {
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        setContent { MainScreen() }
+    }
+}
+
+@Composable
+fun MainScreen() {
     val navController = rememberNavController()
     var selectedTab by remember { mutableStateOf(BottomTab.HOME) }
 
@@ -287,16 +394,16 @@ fun MainActivity() {
             NavHost(navController, startDestination = HostAppRoute.MainScreen) {
                 // Your app screens
                 composable<HostAppRoute.MainScreen> {
-                    MainScreen()
+                    HomeScreen()
                 }
 
                 // SDK screens
                 composable<HostAppRoute.SdkSearchScreen> {
                     IaSdkScreen(
-                        sdkEntryPoint = SdkEntryPoint.SearchScreen,
-                        onNavigateToEntryPoint = { targetEntryPoint ->
+                        sdkEntryPoint = IaScreen.SearchScreen,
+                        onNavigateToTarget = { target ->
                             // Handle navigation to other SDK screens
-                            when (targetEntryPoint) {
+                            when (target) {
                                 IaScreen.CartScreen -> {
                                     navController.navigate(HostAppRoute.SdkCartScreen)
                                     true // Navigation handled
@@ -348,7 +455,7 @@ Button(
     Text("Open SDK")
 }
 
-// With custom back action handling
+// With custom back action handling and navigation interception
 IaSdkActivity.start(
     context = context,
     view = IaScreen.CartScreen,
@@ -356,13 +463,20 @@ IaSdkActivity.start(
         // Custom logic before closing
         // Return true to close activity, false to prevent closing
         true
-    }
+    },
+    onNavigateToTarget = { target ->
+        // Same contract as IaSdkScreen: true = handled by host, false = SDK navigates
+        false
+    },
 )
+
+// Close every SDK activity the host has opened (e.g. on logout)
+IaSdkActivity.finishAllActivities()
 ```
 
 #### C. View-Based Integration
 
-For traditional View-based apps, create SDK views:
+For traditional View-based apps, create SDK views. The context must belong to an `Activity`:
 
 ```kotlin
 class MyFragment : Fragment() {
@@ -372,8 +486,9 @@ class MyFragment : Fragment() {
         savedInstanceState: Bundle?
     ): View {
         return IaSdkView.createView(
-            context = requireContext(),
-            sdkEntryPoint = IaScreen.SearchScreen
+            context = requireActivity(),
+            sdkEntryPoint = IaScreen.SearchScreen,
+            onNavigateToTarget = null, // optional, same contract as IaSdkScreen
         )
     }
 }
@@ -472,10 +587,12 @@ The SDK provides the following entry points via `IaScreen` object:
 - `PharmacyScreen` - Selected pharmacy details
 - `ApofinderScreen` - Apofinder (pharmacy selection) screen. Emits a typed `IaSdkResult.PharmacySelected` result. See [Standalone Apofinder Screen](#standalone-apofinder-screen).
 - `RedeemPrescription` - Redeem Prescription screen that lists the available redemption methods (CardLink / NFC, prescription photo, QR code). See [Redeem Prescription Screen](#redeem-prescription-screen).
-- `TransferPrescriptionsScreen` - For internal use only. Don't use this, if you want to transfer prescription use `Iasdk.ordering.transferPrescriptions` method
-- `LegalDisclaimerScreen` - Legal disclaimers and terms
-- `PrerequisiteFlow` - Onboarding and legal flow
-- `ThankYouScreen` - Thank you screen shown after successful checkout
+- `PrerequisiteFlow` - Onboarding, legal and pharmacy selection flow
+- `TransferPrescriptionsScreen` - For internal use only. To transfer prescriptions use `IaSdk.ordering.transferPrescriptions(...)`, see [Transfer Prescriptions](#transfer-prescriptions)
+
+`IaScreen.ThankYouScreen` and `IaScreen.ThankYouScreenCompleted` are **navigation targets only** (they are reported to
+`onNavigateToTarget` after a successful checkout and when the user closes the thank-you screen); they cannot be used
+as entry points.
 
 #### Entry-point result types
 
@@ -493,15 +610,49 @@ When you pass a result-producing entry point to `IaSdkScreen` or `IaSdkActivity.
 ```kotlin
 // After user logs in
 IaSdk.setUserData(
-    GuestUser(
+    IaUserData(
+        salutation = "Herr",
         firstName = "John",
         lastName = "Doe",
-        email = "john@example.com"
+        email = "john@example.com",
+        countryCode = 49,                         // optional
+        phoneNumberWithoutCountryCode = "1234567" // optional
     )
 )
 
 // Clear user data on logout
 IaSdk.setUserData(null)
+```
+
+> [!NOTE]
+> `IaSdk.setUserData(GuestUser)` is deprecated since 2.9.0 and will be removed in a future release. Use `IaUserData`.
+
+#### Delivery and billing addresses
+
+The host app can provide one delivery and one billing address that the SDK offers during checkout. Each call
+overwrites the previous host-provided address; `null` removes it. The user's own saved addresses are not affected.
+The address arrives unconfirmed: the user reviews it once in the address form before it can be used for an order.
+
+```kotlin
+val address = IaUserAddress(
+    salutation = "Herr",
+    firstName = "John",
+    lastName = "Doe",
+    street = "Musterstraße",
+    houseNumber = "1",
+    zipCode = "10115",
+    city = "Berlin",
+    phoneNumber = "+491234567",  // optional
+    countryCode = 49,            // optional
+    company = null,              // optional
+)
+
+IaSdk.setUserDeliveryAddress(address)
+IaSdk.setUserBillingAddress(address)
+
+// Remove the host-provided addresses
+IaSdk.setUserDeliveryAddress(null)
+IaSdk.setUserBillingAddress(null)
 ```
 
 #### Customizing UI Configuration
@@ -514,31 +665,49 @@ IaSdk.setHostUiConfig(
 )
 ```
 
-#### Transfer Prescriptions
+#### Haptic feedback
+
+The SDK plays haptic feedback on key interactions. It is enabled by default and can be switched off at init time
+(`IaSdkConfiguration(hapticFeedbackEnabled = false)`) or at runtime, for example to mirror an in-app preference.
+Haptics play only when this switch and the device's system setting are both enabled.
 
 ```kotlin
-// Using PresentationMode.FULL_FLOW (opens in new activity)
-IaSdk.ordering.transferPrescription(
-    context = context,
-    images = listOf(prescriptionImageBytes),
-    pdfs = listOf(prescriptionPdfBytes),
-    presentationMode = PresentationMode.FULL_FLOW
+IaSdk.setHapticFeedbackEnabled(userPrefs.hapticsOn)
+```
+
+#### Transfer Prescriptions
+
+Prescriptions captured by your app (images, PDFs or e-prescription codes) can be handed to the SDK, which adds them to
+the cart. The call needs an `Activity` context.
+
+```kotlin
+val request = TransferPrescriptionRequest(
+    images = listOf(ImagePrescription(data = prescriptionImageBytes)),
+    pdfs = listOf(PdfPrescription(data = prescriptionPdfBytes)),
+    codes = null,     // optional: e-prescription codes
+    orderId = null,   // optional
+)
+
+// Using PresentationMode.FULL_FLOW (opens in new activity), default listener
+IaSdk.ordering.transferPrescriptions(
+    context = activity,
+    transferPrescriptionRequest = request,
+    presentationMode = PresentationMode.FULL_FLOW,
 )
 
 // Using PresentationMode.OVERLAY with custom listener
-IaSdk.ordering.transferPrescription(
-    context = context,
-    images = listOf(prescriptionImageBytes),
-    pdfs = listOf(prescriptionPdfBytes),
+IaSdk.ordering.transferPrescriptions(
+    context = activity,
+    transferPrescriptionRequest = request,
     presentationMode = PresentationMode.OVERLAY,
-    listener = object : TransferPrescriptionListener {
+    transferPrescriptionListener = object : TransferPrescriptionListener {
         override fun onTransferPrescriptionEvent(event: TransferPrescriptionEvent): HandlingDecision {
-            when(event) {
+            when (event) {
                 is TransferPrescriptionEvent.Failed -> {
                     Log.e("TransferPrescriptions", "Transfer prescription failed: ${event.errorMessage}")
                 }
                 TransferPrescriptionEvent.Loading -> {}
-                
+
                 is TransferPrescriptionEvent.Success -> {
                     if (event.navigateToCart) {
                         // Navigate to cart
@@ -552,6 +721,75 @@ IaSdk.ordering.transferPrescription(
 )
 ```
 
+`transferPrescriptions` returns `false` when the SDK is not initialized or the ordering module is not registered.
+
+#### Intercepting scanned prescriptions
+
+With `RxModule` registered, the SDK's scanner adds scanned e-prescription codes and prescription photos to the cart.
+If your app needs to see every scan first (for example to upload it to your own backend), register a
+`RedeemPrescriptionListener`. It is called on the main thread **before** any cart work, and the scanner stays blocked
+until your decision is returned, so return promptly and move backend work to a background dispatcher.
+
+```kotlin
+IaSdk.rx.setRedeemPrescriptionListener(object : RedeemPrescriptionListener {
+    override suspend fun onRedeemPrescriptionEvent(event: RedeemPrescriptionEvent): RedeemPrescriptionDecision {
+        return when (event) {
+            is RedeemPrescriptionEvent.EPrescriptionScanned -> {
+                // event.rawCode: raw QR payload, event.urls: e-prescription task URLs
+                withContext(Dispatchers.IO) { uploadToOwnBackend(event.rawCode, event.urls) }
+                RedeemPrescriptionDecision.Handled
+            }
+            is RedeemPrescriptionEvent.PrescriptionPhotoScanned -> {
+                // event.imageData: raw image bytes
+                RedeemPrescriptionDecision.PerformDefault
+            }
+        }
+    }
+})
+
+// Remove the listener; the SDK falls back to its default behaviour (add to cart)
+IaSdk.rx.setRedeemPrescriptionListener(null)
+```
+
+Decisions:
+- `RedeemPrescriptionDecision.PerformDefault` — the SDK continues as usual and adds the prescription to the cart (requires `OrderingModule`).
+- `RedeemPrescriptionDecision.Handled` — your app took over; the SDK does nothing with the scan and the scanner resumes.
+- `RedeemPrescriptionDecision.Error(message)` — the SDK shows `message` in the scanner's error banner.
+
+Java and bridge hosts (NativeScript, Flutter platform channels) that cannot implement a `suspend` function extend
+`CallbackRedeemPrescriptionListener` instead and call the `decisionHandler` exactly once:
+
+```kotlin
+IaSdk.rx.setRedeemPrescriptionListener(object : CallbackRedeemPrescriptionListener() {
+    override fun onRedeemPrescriptionEvent(
+        event: RedeemPrescriptionEvent,
+        decisionHandler: (RedeemPrescriptionDecision) -> Unit,
+    ) {
+        decisionHandler(RedeemPrescriptionDecision.PerformDefault)
+    }
+})
+```
+
+#### Pharmacy selection
+
+```kotlin
+
+// Select a pharmacy programmatically and observe the outcome
+IaSdk.pharmacy.setPharmacyId("2163", PharmacyConfigListener { result ->
+    when (result) {
+        is PharmacyConfigResult.Success -> Log.d("App", "Pharmacy set: ${result.pharmacyId}")
+        is PharmacyConfigResult.ValidationFailed -> Log.e("App", "Invalid pharmacy: ${result.reason}")
+        PharmacyConfigResult.NotInitialized -> Log.e("App", "SDK not initialized")
+    }
+})
+
+// Read or clear the current pharmacy (suspend functions)
+lifecycleScope.launch {
+    val pharmacyId: String = IaSdk.pharmacy.getPharmacyId() // empty string when none is set
+    IaSdk.pharmacy.clearPharmacyId()                         // also clears the cart
+}
+```
+
 #### Standalone Apofinder Screen
 
 Apofinder (pharmacy selection) can be embedded as a **standalone screen** — for example as a dedicated "Find pharmacy" tab in your bottom navigation, or as a destination launched from your own UI. The selected pharmacy is delivered to the host via the typed `onResult` callback.
@@ -559,7 +797,7 @@ Apofinder (pharmacy selection) can be embedded as a **standalone screen** — fo
 **Requirements:**
 - Register `ApofinderModule` before `IaSdk.init(...)`:
   ```kotlin
-  IaSdk.register(ApofinderModule, /* other modules */)
+  IaSdk.register(IntegrationsModule, ApofinderModule, /* other modules */)
   ```
 
 **Embedded (Compose):**
@@ -599,14 +837,14 @@ IaSdkActivity.start(
 
 `IaScreen.RedeemPrescription` exposes the prescription-redemption hub as a standalone screen. It renders up to three sections, each gated on what your app has registered:
 
-- **Electronic health card (CardLink / NFC)** — visible only when a CardLink feature provider is registered, the device supports NFC, and the currently selected pharmacy has CardLink enabled.
+- **Electronic health card (CardLink / NFC)** — visible only when `CardlinkModule` is registered, the device runs Android 11+ and supports NFC, and the currently selected pharmacy has both CardLink services enabled (PCASE36 and PCASE38).
 - **Prescription photo** — visible only when `RxModule` is registered. Opens the prescription camera.
 - **QR code (e-prescription)** — visible only when `RxModule` is registered. Opens the QR scanner.
 
 If none of the sections are available, the screen renders informational messages instead.
 
 **Requirements:**
-- Register the modules for the redemption methods you want to expose (`RxModule` for photo/QR, plus the CardLink feature provider for NFC).
+- Register the modules for the redemption methods you want to expose (`RxModule` for photo/QR, `CardlinkModule` for NFC).
 - The standard prerequisite chain (onboarding, legal, pharmacy selection) still runs before the screen opens if not already completed.
 
 **Embedded (Compose):**
@@ -627,7 +865,7 @@ IaSdkActivity.start(
 )
 ```
 
-`RedeemPrescription` is a fire-and-forget entry point (`SdkEntryPoint<Nothing?>`) — it does not deliver a typed result. Use `onFinish` (embedded) or `onBackAction` (activity) to react to the user closing the flow.
+`RedeemPrescription` is a fire-and-forget entry point (`SdkEntryPoint<Nothing?>`) — it does not deliver a typed result. Use `onFinish` (embedded) or `onBackAction` (activity) to react to the user closing the flow. To be notified of every scan before the SDK processes it, see [Intercepting scanned prescriptions](#intercepting-scanned-prescriptions).
 
 #### Prerequisite Flow Callback
 
@@ -701,7 +939,7 @@ class MyApp : Application() {
     override fun onCreate() {
         super.onCreate()
 
-        IaSdk.register(/* your modules */)
+        IaSdk.register(IntegrationsModule, /* your modules */)
 
         // Transfer v1 user data before init (runs once, no-op if no v1 data)
         IaSdk.transferSDKv1UserData(this)
@@ -762,13 +1000,37 @@ IaSdk.setShowDataProcessingClickListener(object : SdkShowDataProcessingListener 
 })
 ```
 
+#### Analytics
+
+With `IaSdkConfiguration(analyticsEnabled = true)` the SDK emits analytics events (screen views, user actions,
+e-commerce and lifecycle events) to a listener you provide. Consent defaults to `GRANTED`;
+
+```kotlin
+IaSdk.setAnalyticsListener(AnalyticsListener { event ->
+    when (event) {
+        is AnalyticsEvent.ScreenView -> analytics.logScreenView(event.screenName, event.featureName)
+        is AnalyticsEvent.UserAction -> analytics.logEvent(event.actionName, event.properties)
+        else -> { /* ScreenExit, Lifecycle, Ecommerce, Engagement, Derived */ }
+    }
+})
+
+IaSdk.setAnalyticsConsent(AnalyticsConsent.GRANTED) // or DENIED / UNKNOWN
+```
+
 ### 7. Bottom Tab Navigation Example
 
 For apps with bottom navigation, integrate SDK screens as tabs:
 
 ```kotlin
+class MainActivity : ComponentActivity() {
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        setContent { MainScreen() }
+    }
+}
+
 @Composable
-fun MainActivity() {
+fun MainScreen() {
     val navController = rememberNavController()
     var selectedTab by remember { mutableStateOf(BottomTab.HOME) }
 
@@ -782,17 +1044,17 @@ fun MainActivity() {
             NavHost(navController, startDestination = HostAppRoute.MainScreen) {
                 // Your app screens
                 composable<HostAppRoute.MainScreen> {
-                    MainScreen()
+                    HomeScreen()
                 }
 
                 // SDK screens
                 composable<HostAppRoute.SdkSearchScreen> {
                     IaSdkScreen(
                         sdkEntryPoint = IaScreen.SearchScreen,
-                        onNavigateToEntryPoint = { targetEntryPoint ->
+                        onNavigateToTarget = { target ->
                             // Handle navigation to other SDK screens
-                            when (targetEntryPoint) {
-                                SdkEntryPoint.CartScreen -> {
+                            when (target) {
+                                IaScreen.CartScreen -> {
                                     navController.navigate(HostAppRoute.SdkCartScreen)
                                     true // Navigation handled
                                 }
@@ -824,29 +1086,29 @@ fun MainActivity() {
             )
         }
     }
-    
-    private fun onBottomTabSelect(selectedTab: BottomTab, navController: NavHostController) {
-        when (selectedTab) {
-            BottomTab.HOME -> navController.navigate(HostAppRoute.MainScreen) {
-                manageBottomNavigationBackStack()
-            }
-            BottomTab.SEARCH -> navController.navigate(HostAppRoute.SdkSearchScreen) {
-                manageBottomNavigationBackStack()
-            }
-            BottomTab.CART -> navController.navigate(HostAppRoute.SdkCartScreen) {
-                manageBottomNavigationBackStack()
-            }
-            BottomTab.PHARMACY -> navController.navigate(HostAppRoute.SdkPharmacyScreen) {
-                manageBottomNavigationBackStack()
-            }
+}
+
+private fun onBottomTabSelect(selectedTab: BottomTab, navController: NavHostController) {
+    when (selectedTab) {
+        BottomTab.HOME -> navController.navigate(HostAppRoute.MainScreen) {
+            manageBottomNavigationBackStack()
+        }
+        BottomTab.SEARCH -> navController.navigate(HostAppRoute.SdkSearchScreen) {
+            manageBottomNavigationBackStack()
+        }
+        BottomTab.CART -> navController.navigate(HostAppRoute.SdkCartScreen) {
+            manageBottomNavigationBackStack()
+        }
+        BottomTab.PHARMACY -> navController.navigate(HostAppRoute.SdkPharmacyScreen) {
+            manageBottomNavigationBackStack()
         }
     }
+}
 
-    private fun NavOptionsBuilder.manageBottomNavigationBackStack() {
-        popUpTo(0) { inclusive = true }
-        launchSingleTop = true
-        restoreState = true
-    }
+private fun NavOptionsBuilder.manageBottomNavigationBackStack() {
+    popUpTo(0) { inclusive = true }
+    launchSingleTop = true
+    restoreState = true
 }
 ```
 
@@ -873,14 +1135,16 @@ IaSdkScreen(
 IaSdkActivity.start(context, IaScreen.StartScreen)
 
 // Transfer prescription as overlay
-IaSdk.ordering.transferPrescription(
-    context = context,
-    images = listOf(prescriptionImageBytes),
-    pdfs = listOf(prescriptionPdfBytes),
+IaSdk.ordering.transferPrescriptions(
+    context = activity,
+    transferPrescriptionRequest = TransferPrescriptionRequest(
+        images = listOf(ImagePrescription(data = prescriptionImageBytes)),
+    ),
     presentationMode = PresentationMode.OVERLAY,
-    listener = object : TransferPrescriptionListener {
-        override fun onTransferPrescriptionEvent() {
+    transferPrescriptionListener = object : TransferPrescriptionListener {
+        override fun onTransferPrescriptionEvent(event: TransferPrescriptionEvent): HandlingDecision {
             // Navigate to cart or show success message
+            return HandlingDecision.HANDLED
         }
     }
 )
@@ -890,7 +1154,8 @@ IaSdk.ordering.transferPrescription(
 
 - **`IaSdk`** - Main SDK entry point for initialization and configuration
 - **`IaSdk.pharmacy`** - Access to pharmacy-related functionality
-- **`IaSdk.ordering`** - Access to cart, ordering, and prescription features
+- **`IaSdk.ordering`** - Access to cart, ordering, and prescription transfer
+- **`IaSdk.rx`** - Access to prescription-redemption functionality (scan interception)
 - **`IaSdkScreen`** - Composable for embedding SDK screens
 - **`IaSdkActivity`** - Activity for launching SDK in full-flow mode
 - **`IaSdkView`** - Factory for creating SDK views for traditional View hierarchies
@@ -899,8 +1164,10 @@ IaSdk.ordering.transferPrescription(
 - **`ProductType`** - Sealed interface defining product grid content types
 - **`PresentationMode`** - Enum defining how SDK screens are presented
 - **`IaSdkConfiguration`** - Configuration options for SDK initialization
+- **`IaUserData`** / **`IaUserAddress`** - User and address data the host can hand to the SDK
 - **`InitState`** - Observable state for monitoring SDK initialization
 - **`IaScreen`** - Object defining all available SDK screens
+- **`SdkNavigationTarget`** - SDK screens reported to `onNavigateToTarget`
 - **`IaSdkResult`** - Sealed interface of typed results emitted by result-producing entry points (e.g., `IaSdkResult.PharmacySelected` from `ApofinderScreen`)
 - **`PrerequisiteResult`** - Enum delivered to `onPrerequisiteResult` (`COMPLETED` / `CANCELLED`)
 
@@ -908,52 +1175,82 @@ IaSdk.ordering.transferPrescription(
 
 #### IaSdk Properties
 
-- `initState: StateFlow<InitState>` - Observable initialization state
+- `initState: StateFlow<InitState>` - Observable initialization state (`UNINITIALIZED`, `INITIALIZING`, `INITIALIZED`, `ERROR`)
 - `pharmacy: IaSdkPharmacy` - Pharmacy-related operations
 - `ordering: IaSdkOrdering` - Cart and ordering operations
+- `rx: IaSdkRx` - Prescription-redemption operations
 
 #### IaSdk Methods
 
-- `register(vararg modules: SdkModule): IaSdk` - Register SDK modules
-- `init(...)` - Initialize SDK with configuration
-- `setEventListener(listener: SdkEventListener?)` - Set event listener
-- `setUserData(user: GuestUser?)` - Set/update user data
-- `setHostUiConfig(config: HostUiConfig?)` - Update UI configuration
+- `register(vararg modules: SdkModule): IaSdk` - Register SDK modules (call before `init`)
+- `init(context, environmentType, apiKey, clientId, configuration = IaSdkConfiguration(), sdkEventListener = null)` - Initialize SDK with configuration
+- `setEventListener(listener: SdkEventListener?): IaSdk` - Set event listener
+- `setUserData(user: IaUserData?): IaSdk` - Set/update user data (`null` clears)
+- `setUserData(user: GuestUser?): IaSdk` - **Deprecated**, use the `IaUserData` overload
+- `setUserDeliveryAddress(address: IaUserAddress?): IaSdk` - Set/replace the host-provided delivery address (`null` removes)
+- `setUserBillingAddress(address: IaUserAddress?): IaSdk` - Set/replace the host-provided billing address (`null` removes)
+- `setHostUiConfig(config: HostUiConfig?): IaSdk` - Update UI configuration
+- `setHapticFeedbackEnabled(enabled: Boolean): IaSdk` - Enable or disable SDK haptic feedback at runtime
+- `setAnalyticsListener(listener: AnalyticsListener?): IaSdk` - Receive analytics events
+- `setAnalyticsConsent(consent: AnalyticsConsent): IaSdk` - `GRANTED` (default), `DENIED` or `UNKNOWN`
 - `isInitialized(): Boolean` - Check if SDK is initialized
-- `isPrerequisiteFlowCompleted(): Boolean` - Suspend snapshot of whether onboarding, legal, and pharmacy selection are all satisfied. See [Prerequisite Flow Callback](#prerequisite-flow-callback)
+- `suspend isPrerequisiteFlowCompleted(): Boolean` - Snapshot of whether onboarding, legal, and pharmacy selection are all satisfied. See [Prerequisite Flow Callback](#prerequisite-flow-callback)
+- `resetPrerequisites(): Boolean` - Reset onboarding/legal/pharmacy flags so the full prerequisite chain runs again (debug and QA surfaces)
 - `clearAllData(): Boolean` - Clear all SDK data
 - `transferSDKv1UserData(context: Context)` - Transfer user data from SDK v1 to v2 (call before `init`)
-- `setImpressumClickListener(listener: SdkImpressumListener)` - Set impressum listener
-- `setShowDataProcessingClickListener(listener: SdkShowDataProcessingListener)` - Set data processing listener
+- `setImpressumClickListener(listener: SdkImpressumListener): IaSdk` - Set impressum listener
+- `setShowDataProcessingClickListener(listener: SdkShowDataProcessingListener): IaSdk` - Set data processing listener
 
 #### IaSdkOrdering Methods
 
-- `setCartListener(listener: CartListener)` - Listen to cart changes
-- `setCheckoutListener(listener: CheckoutListener)` - Listen to checkout completion
-- `transferPrescription(...)` - Transfer prescription data
-- `deleteCart()` - Clear cart contents
+- `setCartListener(listener: CartListener?): IaSdkOrdering` - Listen to cart changes
+- `setCheckoutListener(listener: CheckoutListener?): IaSdkOrdering` - Listen to checkout completion
+- `transferPrescriptions(context: Activity, transferPrescriptionRequest: TransferPrescriptionRequest, transferPrescriptionListener: TransferPrescriptionListener = DefaultTransferPrescriptionListener(), options: (NavOptionsBuilder.() -> Unit)? = null, presentationMode: PresentationMode): Boolean` - Transfer prescription data; `false` if the SDK is not initialized or ordering is not registered
+- `deleteCart(): Boolean` - Clear cart contents
 
 #### IaSdkPharmacy Methods
-- `setPharmacyId(pharmacyId: String, pharmacyConfigListener: PharmacyConfigListener? = null)` - Set pharmacy id and observe result
-- `getPharmacyId(): String` - Suspend fun - Get the current pharmacy ID.
+
+- `setPharmacyId(pharmacyId: String, pharmacyConfigListener: PharmacyConfigListener? = null)` - Set pharmacy id and observe result (`Success`, `ValidationFailed`, `NotInitialized`)
+- `suspend getPharmacyId(): String` - Get the current pharmacy ID, empty string when none is set
+- `suspend clearPharmacyId()` - Clear the current pharmacy ID and the cart
+
+#### IaSdkRx Methods
+
+- `setRedeemPrescriptionListener(listener: RedeemPrescriptionListener?): IaSdkRx` - Intercept scanned prescriptions before the SDK processes them (`null` restores default behaviour)
+
+#### Views
+
+- `IaSdkScreen(sdkEntryPoint, presentationMode = EMBEDDED, onNavigateToTarget = null, onResult = null, onFinish = {}, onPrerequisiteResult = null)` - Composable
+- `IaSdkActivity.start(context, view, onBackAction = { true }, onNavigateToTarget = null, onResult = null)` - Launch in a new activity
+- `IaSdkActivity.finishAllActivities()` - Finish every open SDK activity
+- `IaSdkView.createView(context: Context, sdkEntryPoint, onNavigateToTarget = null): View` - Create an SDK `View` (needs an `Activity` context)
 
 ### 11. Troubleshooting
 
 **SDK not initializing?**
 
-- Ensure you called `register()` before `init()`
+- Ensure you called `register()` before `init()`, and that `IntegrationsModule` is registered
 - Check that your API key and client ID are valid
 - Monitor `initState` flow or implement `SdkEventListener` to see initialization errors
+- Error reference: [ERRORS.md](ERRORS.md)
 
 **Navigation not working?**
 
 - Verify you're using the correct `IaScreen` for your desired screen
 - Ensure SDK modules for required features are registered
-- Check that `onNavigateToEntryPoint` callback is properly implemented for tab navigation
+- Check that `onNavigateToTarget` callback is properly implemented for tab navigation
 
 **Cart not updating?**
 
-- Verify ordering module is registered: `IaSdk.register(OrderingModule)`
+- Verify ordering module is registered: `IaSdk.register(IntegrationsModule, OrderingModule)`
+
+**Build fails resolving `de.link4health` or `com.mapbox` artifacts?**
+
+- Add the Mapbox repository (always) and the Link4Health repository (cardlink) as shown in [Adding repositories](#1-adding-repositories)
+
+**Manifest merger fails with "uses-sdk:minSdkVersion 27 cannot be smaller than version 30 declared in library"?**
+
+- Add the `tools:overrideLibrary` entry from [CardLink requirements](#cardlink-requirements)
 
 ### 12. Usage and Testing FAQ
 
