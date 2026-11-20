@@ -159,6 +159,78 @@ dependencies {
 > Dependency for  `integrations` is required, it provides the base functionality for the SDK.
 > Add other dependencies for features that you want to use (otc, ordering ,rx ,pharmacy...)
 
+#### Auto Backup exclusion rules
+
+The SDK stores sensitive data on the device (session tokens, health data, network logs). To prevent this data from leaving the device through [Android Auto Backup](https://developer.android.com/identity/data/autobackup) and device-to-device transfer, the SDK ships backup exclusion rules and declares them in its library manifest (`android:fullBackupContent` for Android 11 and below, `android:dataExtractionRules` for Android 12+).
+
+**If your app does NOT declare its own backup rules** — nothing to do. The SDK's rules merge into your app automatically through manifest merging, and the SDK data is fully excluded from backups.
+
+**If your app DOES declare its own `android:fullBackupContent` or `android:dataExtractionRules`** — your build will fail with a manifest merger error like:
+
+```
+Attribute application@fullBackupContent value=(@xml/backup_rules) from AndroidManifest.xml
+is also present at [de.ihreapotheken.sdk:core:<version>] AndroidManifest.xml value=(@xml/core_ia_sdk_backup_rules).
+Suggestion: add 'tools:replace="android:fullBackupContent"' to <application> element at AndroidManifest.xml to override.
+```
+
+This is intentional — your rules would otherwise silently override the SDK's. To resolve it you must:
+
+1. Add `tools:replace` for the conflicting attribute(s) to your `<application>` element:
+
+   ```xml
+   <application
+       android:fullBackupContent="@xml/backup_rules"
+       android:dataExtractionRules="@xml/data_extraction_rules"
+       tools:replace="android:fullBackupContent,android:dataExtractionRules"
+       ... >
+   ```
+
+2. Copy the SDK's exclusion entries into **both** of your own rule files — into `<full-backup-content>` (Android 11−) and into both the `<cloud-backup>` and `<device-transfer>` sections of your data extraction rules (Android 12+):
+
+   ```xml
+   <!-- IhreApotheken SDK exclusions — keep in sync with the SDK version you ship -->
+
+   <!-- SDK DataStores -->
+   <exclude domain="file" path="datastore/user_preferences.preferences_pb" />
+   <exclude domain="file" path="datastore/pharmacy_preferences.preferences_pb" />
+   <exclude domain="file" path="datastore/session_preferences.preferences_pb" />
+   <exclude domain="file" path="datastore/ordering_data_store.preferences_pb" />
+   <exclude domain="file" path="datastore/onboarding_preferences.preferences_pb" />
+   <exclude domain="file" path="datastore/cardlink_preferences.preferences_pb" />
+   <exclude domain="file" path="datastore/InsuranceCards.json" />
+   <exclude domain="file" path="datastore/activated_lab_tests.enc" />
+
+   <!-- Cart cache, prescription photos (health data) and the legacy cart key -->
+   <exclude domain="file" path="cart_data.enc" />
+   <exclude domain="file" path="prescription_photos" />
+   <exclude domain="file" path="aes_key.bin" />
+
+   <!-- SDK, CardLink, crash, network and analytics logs -->
+   <exclude domain="file" path="sdkV2_logs.logcat" />
+   <exclude domain="file" path="cl_logs.logcat" />
+   <exclude domain="file" path="crash_logs.enc" />
+   <exclude domain="file" path="network_logs.enc" />
+   <exclude domain="file" path="analytics_logs.enc" />
+   <exclude domain="file" path="datastore/sdkV2-logs.json" />
+   <exclude domain="file" path="datastore/CL-logs.json" />
+
+   <!-- SDK SharedPreferences -->
+   <exclude domain="sharedpref" path="TokenPreferences" />
+   <exclude domain="sharedpref" path="ia_lib_secret_shared_prefs" />
+   <exclude domain="sharedpref" path="iasdk_crash_handler" />
+   <exclude domain="sharedpref" path="sdk_exit_info_collector" />
+   <exclude domain="sharedpref" path="secure_recent_searches_prefs" />
+   <exclude domain="sharedpref" path="ia_sdk_analytics_session" />
+   ```
+
+   The reference files ship inside the SDK's `core` artifact as `res/xml/core_ia_sdk_backup_rules.xml` and `res/xml/core_ia_sdk_data_extraction_rules.xml`.
+
+> [!IMPORTANT]
+> `sharedpref` paths must be the `getSharedPreferences()` name **without** the `.xml` suffix — Android appends the suffix itself, so a path ending in `.xml` silently matches nothing (the Android Studio template's own sample is misleading here).
+
+> [!NOTE]
+> Copying these entries is a mandatory integration step for apps with their own backup rules — without them, SDK tokens, health data and logs are restored on app reinstall and transferred to new devices. Re-check the list when upgrading the SDK; new SDK versions may add entries.
+
 ### 3. SDK initialization
 
 Before using any functionality from the SDK, it must be initialized in `Application` class.
@@ -693,6 +765,10 @@ IaSdk.ordering.transferPrescription(
 - `getPharmacyId(): String` - Suspend fun - Get the current pharmacy ID.
 
 ### 11. Troubleshooting
+
+**Manifest merger failing after adding or upgrading the SDK?**
+
+- If the error mentions `application@fullBackupContent` or `application@dataExtractionRules`, your app declares its own backup rules and they conflict with the SDK's. Add `tools:replace` and copy the SDK's exclusion entries into your rule files — see [Auto Backup exclusion rules](#auto-backup-exclusion-rules).
 
 **SDK not initializing?**
 
